@@ -1,0 +1,41 @@
+/* src/components/Dashboard.css */
+
+/* Card Styles */
+.duck-card {
+  background: #f9f9f9;
+  border: 2px solid #e1e1e1;
+  border-radius: 10px;
+  transition: transform 0.2s ease;
+}
+
+.duck-card:hover {
+  transform: scale(1.05);
+  border-color: var(--primary-color); /* Using global primary color */
+}
+
+/* Icon Styles */
+.duck-icon {
+  color: var(--primary-color); /* Using global primary color */
+  margin-right: 10px;
+}
+
+/* Badge Styles */
+.badge-success {
+  background-color: var(--success-color); /* Using global success color */
+}
+
+.badge-secondary {
+  background-color: var(--text-color); /* Using global text color */
+}
+
+/* Button Styles */
+.btn-primary {
+  background-color: var(--primary-color); /* Using global primary color */
+  border: none;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-color-hover); /* Using global primary hover color */
+}

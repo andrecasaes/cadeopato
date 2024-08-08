@@ -1,0 +1,32 @@
+/* src/components/Login.css */
+
+.login-card {
+    max-width: 400px;
+    border-radius: 10px;
+    overflow: hidden;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .duck-logo {
+    color: var(--primary-color); /* Using global primary color */
+  }
+  
+  .btn-primary {
+    background-color: var(--primary-color); /* Using global primary color */
+    border: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  .btn-primary:disabled {
+    background-color: #c0c0c0;
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--primary-color-hover); /* Using global primary hover color */
+  }
+  .duck-img {
+    width: 15%;
+    height: auto;
+  }

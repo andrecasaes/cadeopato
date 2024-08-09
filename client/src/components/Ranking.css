@@ -1,10 +1,5 @@
 /* src/components/Ranking.css */
 
-/* General Styles */
-.container-rank {
-  max-width: 600px;
-  margin: 0 auto;
-}
 
 .list-group {
   background-color: var(--background-color);

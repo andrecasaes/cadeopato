@@ -1,32 +1,87 @@
 /* src/components/Login.css */
 
+/* General Styles */
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.main-back {
+  padding: 20px; /* Add some padding for better spacing on small screens */
+}
+
 .login-card {
-    max-width: 400px;
-    border-radius: 10px;
-    overflow: hidden;
-    padding: 20px;
-    background-color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
-  .duck-logo {
-    color: var(--primary-color); /* Using global primary color */
-  }
-  
-  .btn-primary {
-    background-color: var(--primary-color); /* Using global primary color */
-    border: none;
-    transition: background-color 0.3s ease;
-  }
-  
-  .btn-primary:disabled {
-    background-color: #c0c0c0;
-  }
-  
-  .btn-primary:hover {
-    background-color: var(--primary-color-hover); /* Using global primary hover color */
-  }
-  .duck-img {
-    width: 15%;
-    height: auto;
-  }
+  width: 100%;
+  max-width: 400px; /* Limit max width for better mobile viewing */
+  border-radius: 10px;
+  background-color: white;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Header Styles */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-icon {
+  width: 60px; /* Smaller width for mobile */
+  height: auto;
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-size: 1.5rem; /* Slightly smaller font size for better fit */
+}
+
+/* House Selection Grid */
+.container {
+  padding: 0 15px; /* Ensure padding on mobile */
+}
+
+.row {
+  margin: 0 -10px; /* Adjust row margin for better spacing */
+}
+
+.house-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  padding: 10px;
+}
+
+.house-card:hover {
+  transform: scale(1.05);
+}
+
+.house-card.selected .card {
+  border: 2px solid var(--primary-color);
+}
+
+.house-img {
+  width: 60px; /* Smaller circular image for mobile */
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-top: 10px;
+}
+
+.card-title {
+  font-size: 0.9rem; /* Smaller font size for better fit */
+  margin-top: 5px;
+}
+
+/* Button Styles */
+button.btn-primary {
+  font-size: 1rem; /* Adjust button font size */
+  padding: 10px; /* Add padding for better touch targets */
+}
+
+.house-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}

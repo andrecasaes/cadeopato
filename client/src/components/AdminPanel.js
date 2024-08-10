@@ -1,9 +1,5 @@
-// src/components/AdminPanel.js
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "./AdminPanel.css"; // Import the custom CSS file
-import DuckIcon from "../assets/duck.svg"; // Import the duck SVG file
 import {
   Modal,
   Button,
@@ -22,6 +18,8 @@ import {
   CardMedia,
   CardContent,
   Container,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import {
@@ -29,15 +27,33 @@ import {
   AddCircle as AddCircleIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
+import { styled } from '@mui/material/styles';
+
+// Styled ToggleButton using CSS Variables
+const CustomToggleButton = styled(ToggleButton)(({ theme }) => ({
+  color: 'var(--text-color)',
+  fontFamily: 'var(--font-family)',
+  '&:hover': {
+    backgroundColor: 'var(--primary-color-hover)',
+    color: 'white',
+  },
+  '&.Mui-selected': {
+    backgroundColor: 'var(--primary-color)',
+    color: 'white',
+  },
+}));
 
 const AdminPanel = () => {
   const [ducks, setDucks] = useState([]);
-  const [newDuck, setNewDuck] = useState({
+  const [filteredDucks, setFilteredDucks] = useState([]);
+  const [currentDuck, setCurrentDuck] = useState({
     id: "",
     type: "",
     house: "",
     photo: "",
   });
+  const [selectedHouse, setSelectedHouse] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const API_ROOT = process.env.REACT_APP_API_ROOT;
 
@@ -46,6 +62,7 @@ const AdminPanel = () => {
       try {
         const response = await axios.get(`${API_ROOT}/ducks`);
         setDucks(response.data);
+        setFilteredDucks(response.data.sort((a, b) => a.id - b.id));
       } catch (error) {
         console.error("Error fetching ducks:", error);
       }
@@ -55,35 +72,89 @@ const AdminPanel = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewDuck({ ...newDuck, [name]: value });
+    setCurrentDuck({ ...currentDuck, [name]: value });
   };
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewDuck({ ...newDuck, photo: reader.result });
-      };
-      reader.readAsDataURL(file);
+      setCurrentDuck({ ...currentDuck, photo: file });
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${API_ROOT}/ducks`, {
-        id: newDuck.id,
-        type: newDuck.type,
-        house: newDuck.house,
-        photo: newDuck.photo,
-        found: false,
-      });
-      setDucks([...ducks, response.data]);
-      setNewDuck({ id: "", type: "", house: "", photo: "" });
+      const formData = new FormData();
+      formData.append("id", currentDuck.id);
+      formData.append("type", currentDuck.type);
+      formData.append("house", currentDuck.house);
+      if (currentDuck.photo instanceof File) {
+        formData.append("photo", currentDuck.photo);
+      }
+
+      if (isEditing) {
+        await axios.put(`${API_ROOT}/ducks/${currentDuck._id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        const updatedDucks = ducks.map((duck) =>
+          duck._id === currentDuck._id ? { ...duck, ...currentDuck } : duck
+        );
+        setDucks(updatedDucks);
+        setFilteredDucks(updatedDucks);
+      } else {
+        formData.append("found", false); // Default value for new ducks
+        const response = await axios.post(`${API_ROOT}/ducks`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        setDucks([...ducks, response.data]);
+        setFilteredDucks([...ducks, response.data]);
+      }
       setShowModal(false); // Close the modal
     } catch (error) {
-      console.error("Error adding new duck:", error);
+      console.error("Error saving duck:", error);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`${API_ROOT}/ducks/${currentDuck._id}`);
+      const updatedDucks = ducks.filter((duck) => duck._id !== currentDuck._id);
+      setDucks(updatedDucks);
+      setFilteredDucks(updatedDucks);
+      setShowModal(false); // Close the modal
+    } catch (error) {
+      console.error("Error deleting duck:", error);
+    }
+  };
+
+  const openEditModal = (duck) => {
+    setCurrentDuck(duck);
+    setIsEditing(true);
+    setShowModal(true);
+  };
+
+  const openAddModal = () => {
+    setCurrentDuck({
+      id: "",
+      type: "",
+      house: selectedHouse || "",
+      photo: "",
+    });
+    setIsEditing(false);
+    setShowModal(true);
+  };
+
+  const handleHouseFilter = (event, newHouse) => {
+    setSelectedHouse(newHouse);
+    if (newHouse) {
+      setFilteredDucks(
+        ducks
+          .filter((duck) => duck.house === newHouse)
+          .sort((a, b) => a.id - b.id)
+      );
+    } else {
+      setFilteredDucks(ducks.sort((a, b) => a.id - b.id));
     }
   };
 
@@ -107,16 +178,33 @@ const AdminPanel = () => {
           >
             <h2 style={{ margin: 0 }}> QuackTequila</h2>
           </Typography>
-          <IconButton
-            edge="end"
-            color="inherit"
-            component={Link}
-            onClick={() => setShowModal(true)}
-          >
+          <IconButton edge="end" color="inherit" onClick={openAddModal}>
             <AddCircleIcon />
           </IconButton>
         </Toolbar>
+        <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+          <ToggleButtonGroup
+            value={selectedHouse}
+            exclusive
+            onChange={handleHouseFilter}
+            aria-label="house filter"
+          >
+            <CustomToggleButton value="House1" aria-label="House 1">
+              House 1
+            </CustomToggleButton>
+            <CustomToggleButton value="House2" aria-label="House 2">
+              House 2
+            </CustomToggleButton>
+            <CustomToggleButton value="House3" aria-label="House 3">
+              House 3
+            </CustomToggleButton>
+            <CustomToggleButton value="House4" aria-label="House 4">
+              House 4
+            </CustomToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </AppBar>
+
       <Container>
         <Modal
           open={showModal}
@@ -144,7 +232,7 @@ const AdminPanel = () => {
               component="h2"
               gutterBottom
             >
-              Add novo pato
+              {isEditing ? "Edit Duck" : "Add New Duck"}
               <IconButton
                 aria-label="close"
                 onClick={() => setShowModal(false)}
@@ -160,8 +248,9 @@ const AdminPanel = () => {
                   type="number"
                   id="duckNumber"
                   name="id"
-                  value={newDuck.id}
+                  value={currentDuck.id}
                   onChange={handleInputChange}
+                  disabled={isEditing} // Disable ID input if editing
                   required
                 />
               </FormControl>
@@ -171,7 +260,7 @@ const AdminPanel = () => {
                   labelId="duckType-label"
                   id="duckType"
                   name="type"
-                  value={newDuck.type}
+                  value={currentDuck.type}
                   onChange={handleInputChange}
                   required
                 >
@@ -185,7 +274,7 @@ const AdminPanel = () => {
                   labelId="duckHouse-label"
                   id="duckHouse"
                   name="house"
-                  value={newDuck.house}
+                  value={currentDuck.house}
                   onChange={handleInputChange}
                   required
                 >
@@ -207,13 +296,21 @@ const AdminPanel = () => {
                     onChange={handlePhotoChange}
                   />
                 </Button>
-                {newDuck.photo && (
+                {currentDuck.photo && (
                   <Box mt={2}>
-                    <img
-                      src={newDuck.photo}
-                      alt="Duck Preview"
-                      style={{ width: "100%", borderRadius: 4 }}
-                    />
+                    {currentDuck.photo instanceof File ? (
+                      <img
+                        src={URL.createObjectURL(currentDuck.photo)}
+                        alt="Duck Preview"
+                        style={{ width: "100%", borderRadius: 4 }}
+                      />
+                    ) : (
+                      <img
+                        src={`${API_ROOT}/${currentDuck.photo.replace(/\\/g, '/')}`}
+                        alt="Duck Preview"
+                        style={{ width: "100%", borderRadius: 4 }}
+                      />
+                    )}
                   </Box>
                 )}
               </FormControl>
@@ -224,19 +321,38 @@ const AdminPanel = () => {
                 fullWidth
                 sx={{ mt: 3 }}
               >
-                Adicionar
+                {isEditing ? "Update Duck" : "Add Duck"}
               </Button>
+              {isEditing && (
+                <Button
+                  variant="contained"
+                  color="error"
+                  fullWidth
+                  sx={{ mt: 2 }}
+                  onClick={handleDelete}
+                >
+                  Delete Duck
+                </Button>
+              )}
             </Box>
           </Box>
         </Modal>
 
         <Grid container spacing={4} mt={4}>
-          {ducks.map((duck) => (
+          {filteredDucks.map((duck) => (
             <Grid item key={duck._id} xs={12} sm={6} md={4}>
-              <Card className="duck-card">
+              <Card
+                className="duck-card"
+                onClick={() => openEditModal(duck)}
+                sx={{ cursor: "pointer" }}
+              >
                 <CardMedia
                   component="img"
-                  image={duck.photo || "https://via.placeholder.com/150"}
+                  image={
+                    duck.photo
+                      ? `${API_ROOT}/${duck.photo.replace(/\\/g, '/')}`
+                      : "https://via.placeholder.com/150"
+                  }
                   alt={`Duck ${duck.id}`}
                   height="150"
                 />

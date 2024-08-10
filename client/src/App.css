@@ -2,15 +2,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 /* Primary Color: Duck Yellow */
 :root {
-  --primary-color: #ffc107;
-  --primary-color-hover: #E6B207;
-  --secondary-color: #067bc2;
-  --accent-color: #f37748;
-  --background-color: #F5F5F5;
-  --text-color: #2C3E50; /* Changed to Charcoal */
-  --success-color: #4CAF50;
-  --font-family: "Bebas Neue", sans-serif; /* Changed to Poppins */
+  --primary-color: #4a90e2; /* Calming Blue */
+  --primary-color-hover: #357ab7;
+  --secondary-color: #f7d94c; /* Soft Yellow for Highlights */
+  --secondary-color-hover: #e6c200;
+  --accent-color: #f45d22; /* Playful Orange */
+  --accent-color-hover: #d64700;
+  --background-color: #ffffff; /* White Background */
+  --alternate-background-color: #f0f0f0; /* Light Gray */
+  --text-color: #2c3e50; /* Dark Blue-Gray */
+  --success-color: #2ecc71; /* Bright Green */
+  --success-color-hover: #27ae60;
+  --font-family: "Poppins", sans-serif;
 }
+
 
 /* Global Styles */
 body {

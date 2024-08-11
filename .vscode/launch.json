@@ -9,13 +9,13 @@
             "request": "launch",
             "name": "Launch Chrome against localhost",
             "url": "http://localhost:3333",
-            "webRoot": "${workspaceFolder}/client"
+            "webRoot": "${workspaceFolder}/frontend"
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Launch API Server",
-            "program": "${workspaceFolder}/server/server.js", // replace with your server's entry point
+            "program": "${workspaceFolder}/backend/server.js", // replace with your server's entry point
             "env": {
                 "PORT": "5000"
             }

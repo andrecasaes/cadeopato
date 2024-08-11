@@ -40,7 +40,7 @@ const Login = () => {
             {houses.map((houseItem) => (
               <div 
                 key={houseItem.id} 
-                className={`col-6 col-md-3 mb-4 house-card`} 
+                className={`col-6 mb-4 house-card`} 
                 onClick={() => handleLogin(houseItem)}
               >
                 <div className="card p-2">

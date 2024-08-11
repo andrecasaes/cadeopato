@@ -38,7 +38,8 @@ const Duck = mongoose.model('Duck', duckSchema);
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'server/uploads/'); // Folder to store uploaded files
+    // Use an absolute path to ensure it's correctly resolved inside the Docker container
+    cb(null, path.join(__dirname, 'uploads/')); // Store uploaded files in /app/uploads
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + path.basename(file.originalname)); // Rename file to avoid conflicts
@@ -48,7 +49,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Serve static files from the uploads folder
-app.use('/server/uploads', express.static('server/uploads'));
+app.use('/backend/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 

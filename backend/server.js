@@ -6,22 +6,22 @@ const multer = require('multer');
 const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 4000;
 
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
+// Use the MONGODB_URL from environment variables, fallback to a default value
+const mongoDBUrl = process.env.MONGODB_URL || 'mongodb://localhost:27017/duckdb';
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/duckdb', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-// Check connection
-mongoose.connection.once('open', () => {
-  console.log('Connected to MongoDB');
-});
+mongoose.connect(mongoDBUrl)
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((err) => {
+    console.error('Error connecting to MongoDB:', err.message);
+  });
 
 // Duck Schema
 const duckSchema = new mongoose.Schema({
@@ -49,7 +49,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Serve static files from the uploads folder
-app.use('/backend/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/app/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 

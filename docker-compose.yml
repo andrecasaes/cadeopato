@@ -1,4 +1,5 @@
 version: '3.8'
+
 services:
   frontend:
     build:
@@ -8,7 +9,8 @@ services:
     depends_on:
       - backend
     environment:
-      - REACT_APP_API_URL=http://backend:4000/api
+      - PORT=3000
+      - REACT_APP_API_URL=http://backend:4000
 
   backend:
     build:
@@ -18,12 +20,13 @@ services:
     depends_on:
       - db
     environment:
-      - MONGODB_URL=mongodb://db:27017/mydatabase
+      - PORT=4000
+      - MONGODB_URL=mongodb://db:27017/duckdb
     volumes:
-      - uploads:/app/uploads  # Mounts the uploads directory
+      - uploads:/app/uploads
 
   db:
-    image: mongo:latest
+    image: mongo:5.0 # Specifying a version known to support ARM
     ports:
       - "27017:27017"
     volumes:
@@ -31,4 +34,12 @@ services:
 
 volumes:
   mongo-data:
-  uploads: # Declare the uploads volume here
+    driver_opts:
+      type: none
+      device: /mnt/external-hd/mongo-data
+      o: bind
+  uploads:
+    driver_opts:
+      type: none
+      device: /mnt/external-hd/uploads
+      o: bind

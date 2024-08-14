@@ -13,10 +13,10 @@ import {
   MenuItem,
   InputLabel,
   FormControl,
-  Grid,
-  Card,
-  CardMedia,
-  CardContent,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
   Container,
   ToggleButton,
   ToggleButtonGroup,
@@ -27,21 +27,31 @@ import {
   AddCircle as AddCircleIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import { styled } from '@mui/material/styles';
+import { styled } from "@mui/material/styles";
 
 // Styled ToggleButton using CSS Variables
 const CustomToggleButton = styled(ToggleButton)(({ theme }) => ({
-  color: 'var(--text-color)',
-  fontFamily: 'var(--font-family)',
-  '&:hover': {
-    backgroundColor: 'var(--primary-color-hover)',
-    color: 'white',
+  color: "var(--text-color)",
+  fontFamily: "var(--font-family)",
+  "&:hover": {
+    backgroundColor: "var(--primary-color-hover)",
+    color: "white",
   },
-  '&.Mui-selected': {
-    backgroundColor: 'var(--primary-color)',
-    color: 'white',
+  "&.Mui-selected": {
+    backgroundColor: "var(--primary-color)",
+    color: "white",
   },
 }));
+
+const fetchDucks = async (API_ROOT, setDucks, setFilteredDucks) => {
+  try {
+    const response = await axios.get(`${API_ROOT}/ducks`);
+    setDucks(response.data);
+    setFilteredDucks(response.data.sort((a, b) => a.id - b.id));
+  } catch (error) {
+    console.error("Error fetching ducks:", error);
+  }
+};
 
 const AdminPanel = () => {
   const [ducks, setDucks] = useState([]);
@@ -57,17 +67,10 @@ const AdminPanel = () => {
   const [showModal, setShowModal] = useState(false);
   const API_ROOT = process.env.REACT_APP_API_ROOT;
 
+
+  
   useEffect(() => {
-    const fetchDucks = async () => {
-      try {
-        const response = await axios.get(`${API_ROOT}/ducks`);
-        setDucks(response.data);
-        setFilteredDucks(response.data.sort((a, b) => a.id - b.id));
-      } catch (error) {
-        console.error("Error fetching ducks:", error);
-      }
-    };
-    fetchDucks();
+    fetchDucks(API_ROOT, setDucks, setFilteredDucks);
   }, [API_ROOT]);
 
   const handleInputChange = (e) => {
@@ -92,24 +95,18 @@ const AdminPanel = () => {
       if (currentDuck.photo instanceof File) {
         formData.append("photo", currentDuck.photo);
       }
-
+  
       if (isEditing) {
         await axios.put(`${API_ROOT}/ducks/${currentDuck._id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        const updatedDucks = ducks.map((duck) =>
-          duck._id === currentDuck._id ? { ...duck, ...currentDuck } : duck
-        );
-        setDucks(updatedDucks);
-        setFilteredDucks(updatedDucks);
       } else {
         formData.append("found", false); // Default value for new ducks
-        const response = await axios.post(`${API_ROOT}/ducks`, formData, {
+        await axios.post(`${API_ROOT}/ducks`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        setDucks([...ducks, response.data]);
-        setFilteredDucks([...ducks, response.data]);
       }
+      fetchDucks(API_ROOT, setDucks, setFilteredDucks); // Fetch the updated list of ducks
       setShowModal(false); // Close the modal
     } catch (error) {
       console.error("Error saving duck:", error);
@@ -119,9 +116,7 @@ const AdminPanel = () => {
   const handleDelete = async () => {
     try {
       await axios.delete(`${API_ROOT}/ducks/${currentDuck._id}`);
-      const updatedDucks = ducks.filter((duck) => duck._id !== currentDuck._id);
-      setDucks(updatedDucks);
-      setFilteredDucks(updatedDucks);
+      fetchDucks(API_ROOT, setDucks, setFilteredDucks); // Fetch the updated list of ducks
       setShowModal(false); // Close the modal
     } catch (error) {
       console.error("Error deleting duck:", error);
@@ -137,7 +132,7 @@ const AdminPanel = () => {
   const openAddModal = () => {
     setCurrentDuck({
       id: "",
-      type: "",
+      type: "normal",
       house: selectedHouse || "",
       photo: "",
     });
@@ -216,6 +211,7 @@ const AdminPanel = () => {
             alignItems: "center",
             justifyContent: "center",
             marginX: 6,
+            overflowY: "auto", // Allow vertical scrolling if content is too tall
           }}
         >
           <Box
@@ -224,6 +220,10 @@ const AdminPanel = () => {
               p: 4,
               borderRadius: 1,
               boxShadow: 24,
+              maxWidth: "90vw", // Limit modal width on small screens
+              maxHeight: "90vh", // Limit modal height and allow scrolling within
+              overflowY: "auto", // Enable scrolling inside the modal box
+              position: "relative",
             }}
           >
             <Typography
@@ -297,18 +297,29 @@ const AdminPanel = () => {
                   />
                 </Button>
                 {currentDuck.photo && (
-                  <Box mt={2}>
+                  <Box mt={2} sx={{ textAlign: "center" }}>
                     {currentDuck.photo instanceof File ? (
                       <img
                         src={URL.createObjectURL(currentDuck.photo)}
                         alt="Duck Preview"
-                        style={{ width: "100%", borderRadius: 4 }}
+                        style={{
+                          borderRadius: 4,
+                          maxHeight: "200px", // Constrain image height
+                          maxWidth: "100%", // Constrain image width
+                        }}
                       />
                     ) : (
                       <img
-                        src={`${API_ROOT}/${currentDuck.photo.replace(/\\/g, '/')}`}
+                        src={`${API_ROOT}${currentDuck.photo.replace(
+                          /\\/g,
+                          "/"
+                        )}`}
                         alt="Duck Preview"
-                        style={{ width: "100%", borderRadius: 4 }}
+                        style={{
+                          borderRadius: 4,
+                          maxHeight: "200px", // Constrain image height
+                          maxWidth: "100%", // Constrain image width
+                        }}
                       />
                     )}
                   </Box>
@@ -338,42 +349,48 @@ const AdminPanel = () => {
           </Box>
         </Modal>
 
-        <Grid container spacing={4} mt={4}>
-          {filteredDucks.map((duck) => (
-            <Grid item key={duck._id} xs={12} sm={6} md={4}>
-              <Card
-                className="duck-card"
-                onClick={() => openEditModal(duck)}
-                sx={{ cursor: "pointer" }}
-              >
-                <CardMedia
-                  component="img"
-                  image={
-                    duck.photo
-                      ? `${API_ROOT}/${duck.photo.replace(/\\/g, '/')}`
-                      : "https://via.placeholder.com/150"
-                  }
-                  alt={`Duck ${duck.id}`}
-                  height="150"
-                />
-                <CardContent>
-                  <Typography variant="h5" component="div">
-                    Duck {duck.id} - {duck.type}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Casa: {duck.house}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color={duck.found ? "success.main" : "error.main"}
-                  >
-                    {duck.found ? "Encontrado" : "Escondido"}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        <List sx={{ mt: 4 }}>
+  {filteredDucks.map((duck) => (
+    <ListItem
+      key={duck._id}
+      className="duck-list-item"
+      sx={{ cursor: "pointer" }}
+      onClick={() => openEditModal(duck)}
+    >
+      <ListItemText
+        primary={
+          <Typography variant="h5">
+            Pato {duck.id}
+          </Typography>
+        }
+        secondary={
+          <>
+            <Typography variant="body2" color="text.secondary">
+              Casa: {duck.house}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Tipo: {duck.type}
+            </Typography>
+            <Typography
+              variant="body2"
+              color={duck.found ? "success.main" : "error.main"}
+            >
+              {duck.found ? "Encontrado" : "Escondido"}
+            </Typography>
+          </>
+        }
+      />
+      <ListItemSecondaryAction>
+        <img
+          src={duck.photo ? `${API_ROOT}${duck.photo.replace(/\\/g, '/')}` : 'https://via.placeholder.com/40'}
+          alt={`Duck ${duck.id}`}
+          style={{ width: 40, height: 40, borderRadius: '50%' }}
+        />
+      </ListItemSecondaryAction>
+    </ListItem>
+  ))}
+</List>
+
       </Container>
     </>
   );

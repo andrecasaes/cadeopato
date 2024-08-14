@@ -78,8 +78,18 @@
 
 /* Preview styles */
 .preview img {
-  max-width: 100%;
-  max-height: 150px;
-  border-radius: 10px;
+  width: 25vw; /* Set the width to 25% of the viewport width */
+  height: 25vw; /* Set the height equal to the width to maintain the square shape */
+  max-width: 150px; /* Maximum width to prevent it from getting too large on big screens */
+  max-height: 150px; /* Maximum height to match the max-width */
+  border-radius: 10%; /* Keep the corners rounded (adjust percentage as needed) */
+  object-fit: cover; /* Ensures the image covers the entire square without distortion */
   margin-top: 10px;
+}
+
+@media (max-width: 600px) {
+  .preview img {
+    width: 40vw; /* Increase the size slightly on smaller screens */
+    height: 40vw; /* Keep the height equal to the width */
+  }
 }

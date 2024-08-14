@@ -1,11 +1,10 @@
 version: '3.8'
-
 services:
   frontend:
     build:
       context: ./frontend
     ports:
-      - "3000:3000"
+      - "8080:3000"
     depends_on:
       - backend
     environment:
@@ -23,10 +22,10 @@ services:
       - PORT=4000
       - MONGODB_URL=mongodb://db:27017/duckdb
     volumes:
-      - uploads:/app/uploads
+      - uploads:/app/uploads  # Mounts the uploads directory
 
   db:
-    image: mongo:5.0 # Specifying a version known to support ARM
+    image: mongo:latest
     ports:
       - "27017:27017"
     volumes:
@@ -34,12 +33,4 @@ services:
 
 volumes:
   mongo-data:
-    driver_opts:
-      type: none
-      device: /mnt/external-hd/mongo-data
-      o: bind
-  uploads:
-    driver_opts:
-      type: none
-      device: /mnt/external-hd/uploads
-      o: bind
+  uploads: # Declare the uploads volume here

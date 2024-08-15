@@ -1,6 +1,7 @@
 version: '3.8'
 services:
   frontend:
+    image: localhost:5000/duckolympics-frontend:latest  # Specify the image name with the local registry
     build:
       context: ./frontend
     ports:
@@ -12,6 +13,7 @@ services:
       - REACT_APP_API_URL=http://backend:4000
 
   backend:
+    image: localhost:5000/duckolympics-backend:latest  # Specify the image name with the local registry
     build:
       context: ./backend
     ports:
@@ -25,7 +27,7 @@ services:
       - uploads:/app/uploads  # Mounts the uploads directory
 
   db:
-    image: mongo:latest
+    image: arm64v8/mongo:latest  # Use the ARM-compatible MongoDB image
     ports:
       - "27017:27017"
     volumes:

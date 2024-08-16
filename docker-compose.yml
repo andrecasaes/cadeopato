@@ -21,7 +21,7 @@ services:
       - uploads:/app/uploads  # Mount the uploads directory for persistent storage
 
   db:
-    image: arm64v8/mongo:4.4.18  # Use a specific ARM-compatible MongoDB version
+    image: mongo:4.4.18  # Use a specific ARM-compatible MongoDB version
     container_name: mongodb
     ports:
       - "27017:27017"

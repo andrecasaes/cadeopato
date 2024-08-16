@@ -7,7 +7,7 @@ services:
     depends_on:
       - backend
     environment:
-      - PORT: 3000
+      - PORT=3000
       - REACT_APP_API_URL=http://backend:4000
 
   backend:

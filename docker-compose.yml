@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   frontend:
-    image: localhost:5000/duckolympics-frontend:latest  # Specify the image name with the local registry
+    image: dedeco133/duckolympics-frontend:latest  # Image pulled from Docker Hub
     build:
       context: ./frontend
     ports:
@@ -13,7 +13,7 @@ services:
       - REACT_APP_API_URL=http://backend:4000
 
   backend:
-    image: localhost:5000/duckolympics-backend:latest  # Specify the image name with the local registry
+    image: dedeco133/duckolympics-backend:latest  # Image pulled from Docker Hub
     build:
       context: ./backend
     ports:
@@ -22,12 +22,13 @@ services:
       - db
     environment:
       - PORT=4000
-      - MONGODB_URL=mongodb://db:27017/duckdb
+      - MONGODB_URL=mongodb://db:27017/duckdb  # Ensure it uses the correct service name for MongoDB
     volumes:
       - uploads:/app/uploads  # Mounts the uploads directory
 
   db:
-    image: arm64v8/mongo:latest  # Use the ARM-compatible MongoDB image
+    image: arm64v8/mongo:4.4.18  # Use a specific ARM-compatible MongoDB version
+    container_name: mongodb
     ports:
       - "27017:27017"
     volumes:

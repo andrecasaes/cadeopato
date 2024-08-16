@@ -3,10 +3,11 @@ services:
   frontend:
     image: dedeco133/duckolympics-frontend:latest  # Image pulled from Docker Hub
     ports:
-      - "8080:80"  # Map host port 8080 to container port 80
+      - "8080:3000"  # Map host port 8080 to container port 3000
     depends_on:
       - backend
     environment:
+      - PORT: 3000
       - REACT_APP_API_URL=http://backend:4000
 
   backend:
@@ -16,6 +17,7 @@ services:
     depends_on:
       - db
     environment:
+      - PORT=4000
       - MONGODB_URL=mongodb://db:27017/duckdb  # Use the correct service name for MongoDB
     volumes:
       - uploads:/app/uploads  # Mount the uploads directory for persistent storage

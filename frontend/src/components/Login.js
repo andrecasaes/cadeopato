@@ -14,7 +14,7 @@ const houses = [
   { id: 'House1', name: 'Quackarena', img: House1 },
   { id: 'House2', name: 'Quackllini', img: House2 },
   { id: 'House3', name: 'Quackpamonnha', img: House3 },
-  { id: 'House4', name: 'Quackpateta', img: House4 },
+  { id: 'House4', name: 'Quacktetia', img: House4 },
 ];
 
 const Login = () => {

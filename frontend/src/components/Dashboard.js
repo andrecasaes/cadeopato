@@ -31,7 +31,6 @@ const Dashboard = () => {
   const [foundPercentage, setFoundPercentage] = useState(0);
   const [totalNumber, setTotalNumber] = useState(0);
   const [foundNumber, setFoundNumber] = useState(0);
-  const API_ROOT = process.env.REACT_APP_API_ROOT;
 
   // Redirect to login if no user is logged in
   if (!authState.user) {
@@ -42,7 +41,7 @@ const Dashboard = () => {
     const fetchDucks = async () => {
       try {
         const response = await axios.get(
-          `${API_ROOT}/ducks/search?house=${authState.user.house.id}`
+          `/api/ducks/search?house=${authState.user.house.id}`
         );
         const houseDucks = response.data;
         setDucks(houseDucks);
@@ -58,11 +57,11 @@ const Dashboard = () => {
       }
     };
     fetchDucks();
-  }, [authState.user.house, API_ROOT]);
+  }, [authState.user.house]);
 
   const toggleFoundState = async (duckId, found) => {
     try {
-      await axios.put(`${API_ROOT}/ducks/${duckId}`, { found });
+      await axios.put(`/api/ducks/${duckId}`, { found });
 
       // Update the state first
       const updatedDucks = ducks.map((duck) =>

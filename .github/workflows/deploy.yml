@@ -50,4 +50,6 @@ jobs:
         docker pull dedeco133/duckolympics-backend:latest
 
     - name: Deploy with Docker Compose
-      run: docker compose -f ./docker-compose.yml up -d
+      run: |
+        docker compose down
+        docker compose -f ./docker-compose.yml up -d

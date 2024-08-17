@@ -43,9 +43,9 @@ const CustomToggleButton = styled(ToggleButton)(({ theme }) => ({
   },
 }));
 
-const fetchDucks = async (API_ROOT, setDucks, setFilteredDucks) => {
+const fetchDucks = async (setDucks, setFilteredDucks) => {
   try {
-    const response = await axios.get(`${API_ROOT}/ducks`);
+    const response = await axios.get(`/api/ducks`);
     setDucks(response.data);
     setFilteredDucks(response.data.sort((a, b) => a.id - b.id));
   } catch (error) {
@@ -65,13 +65,12 @@ const AdminPanel = () => {
   const [selectedHouse, setSelectedHouse] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const API_ROOT = process.env.REACT_APP_API_ROOT;
 
 
   
   useEffect(() => {
-    fetchDucks(API_ROOT, setDucks, setFilteredDucks);
-  }, [API_ROOT]);
+    fetchDucks(setDucks, setFilteredDucks);
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -97,16 +96,16 @@ const AdminPanel = () => {
       }
   
       if (isEditing) {
-        await axios.put(`${API_ROOT}/ducks/${currentDuck._id}`, formData, {
+        await axios.put(`/api/ducks/${currentDuck._id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
         formData.append("found", false); // Default value for new ducks
-        await axios.post(`${API_ROOT}/ducks`, formData, {
+        await axios.post(`/api/ducks`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }
-      fetchDucks(API_ROOT, setDucks, setFilteredDucks); // Fetch the updated list of ducks
+      fetchDucks(setDucks, setFilteredDucks); // Fetch the updated list of ducks
       setShowModal(false); // Close the modal
     } catch (error) {
       console.error("Error saving duck:", error);
@@ -115,8 +114,8 @@ const AdminPanel = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${API_ROOT}/ducks/${currentDuck._id}`);
-      fetchDucks(API_ROOT, setDucks, setFilteredDucks); // Fetch the updated list of ducks
+      await axios.delete(`/api/ducks/${currentDuck._id}`);
+      fetchDucks(setDucks, setFilteredDucks); // Fetch the updated list of ducks
       setShowModal(false); // Close the modal
     } catch (error) {
       console.error("Error deleting duck:", error);
@@ -310,7 +309,7 @@ const AdminPanel = () => {
                       />
                     ) : (
                       <img
-                        src={`${API_ROOT}${currentDuck.photo.replace(
+                        src={`/api${currentDuck.photo.replace(
                           /\\/g,
                           "/"
                         )}`}
@@ -382,7 +381,7 @@ const AdminPanel = () => {
       />
       <ListItemSecondaryAction>
         <img
-          src={duck.photo ? `${API_ROOT}${duck.photo.replace(/\\/g, '/')}` : 'https://via.placeholder.com/40'}
+          src={duck.photo ? `/api${duck.photo.replace(/\\/g, '/')}` : 'https://via.placeholder.com/40'}
           alt={`Duck ${duck.id}`}
           style={{ width: 40, height: 40, borderRadius: '50%' }}
         />

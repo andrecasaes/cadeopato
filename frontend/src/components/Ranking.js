@@ -10,20 +10,19 @@ import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 
 const Ranking = () => {
   const [rankings, setRankings] = useState([]);
-  const API_ROOT = process.env.REACT_APP_API_ROOT;
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRankings = async () => {
       try {
-        const response = await axios.get(`${API_ROOT}/rankings`);
+        const response = await axios.get(`/api/rankings`);
         setRankings(response.data);
       } catch (error) {
         console.error("Error fetching rankings:", error);
       }
     };
     fetchRankings();
-  }, [API_ROOT]);
+  }, []);
 
   return (
     <>

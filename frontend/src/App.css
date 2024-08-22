@@ -2,19 +2,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 /* Primary Color: Duck Yellow */
 :root {
-  --primary-color: #4a90e2; /* Calming Blue */
-  --primary-color-hover: #357ab7;
-  --secondary-color: #f7d94c; /* Soft Yellow for Highlights */
-  --secondary-color-hover: #e6c200;
-  --accent-color: #f45d22; /* Playful Orange */
-  --accent-color-hover: #d64700;
-  --background-color: #ffffff; /* White Background */
-  --alternate-background-color: #f0f0f0; /* Light Gray */
-  --text-color: #2c3e50; /* Dark Blue-Gray */
-  --success-color: #2ecc71; /* Bright Green */
-  --success-color-hover: #27ae60;
+  --primary-color: #B3BFAA; /* Subtle Olive Green */
+  --primary-color-hover: #9EA994;
+  --secondary-color: #F2E9BB; /* Soft Beige */
+  --secondary-color-hover: #D8CFA0;
+  --accent-color: #F2B705; /* Vibrant Yellow */
+  --accent-color-hover: #E0A904;
+  --background-color: #FFFFFF; /* Soft Beige Background */
+  --alternate-background-color: #F7F6E6; /* Very Light Beige */
+  --text-color: #2E2E2E; /* Dark Charcoal */
+  --success-color: #BBC0AB; /* Subtle Olive Green */
+  --success-color-hover: #A0A58E;
   --font-family: "Poppins", sans-serif;
 }
+
+
 
 
 /* Global Styles */

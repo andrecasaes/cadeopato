@@ -28,6 +28,7 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
+import { useNavigate } from 'react-router-dom';
 
 // Styled ToggleButton using CSS Variables
 const CustomToggleButton = styled(ToggleButton)(({ theme }) => ({
@@ -43,9 +44,12 @@ const CustomToggleButton = styled(ToggleButton)(({ theme }) => ({
   },
 }));
 
+const apiBaseUrl =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:4000";
+
 const fetchDucks = async (setDucks, setFilteredDucks) => {
   try {
-    const response = await axios.get(`/api/ducks`);
+    const response = await axios.get(`${apiBaseUrl}/ducks`);
     setDucks(response.data);
     setFilteredDucks(response.data.sort((a, b) => a.id - b.id));
   } catch (error) {
@@ -53,24 +57,57 @@ const fetchDucks = async (setDucks, setFilteredDucks) => {
   }
 };
 
+const fetchHouses = async (setHouses) => {
+  try {
+    const response = await axios.get(`${apiBaseUrl}/houses`);
+    setHouses(response.data);
+  } catch (error) {
+    console.error("Error fetching houses:", error);
+  }
+};
+
+const fetchUsers = async (setUsers) => {
+  try {
+    const response = await axios.get(`${apiBaseUrl}/users`);
+    setUsers(response.data);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+  }
+};
+
 const AdminPanel = () => {
   const [ducks, setDucks] = useState([]);
+  const [houses, setHouses] = useState([]);
+  const [users, setUsers] = useState([]);
   const [filteredDucks, setFilteredDucks] = useState([]);
   const [currentDuck, setCurrentDuck] = useState({
     id: "",
     type: "",
-    house: "",
+    houseId: "",
     photo: "",
+    userId: "",
   });
   const [selectedHouse, setSelectedHouse] = useState("");
+  const [selectedUser, setSelectedUser] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-
-  
   useEffect(() => {
     fetchDucks(setDucks, setFilteredDucks);
+    fetchHouses(setHouses);
+    fetchUsers(setUsers);
   }, []);
+
+  const navigate = useNavigate();
+  
+  // Assuming you passed the isAdminAuthenticated prop when navigating to the admin page
+  useEffect(() => {
+    const isAdminAuthenticated = sessionStorage.getItem('isAdminAuthenticated');
+
+    if (!isAdminAuthenticated) {
+      navigate('/'); // Redirect to home or login page if not authenticated
+    }
+  }, [navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -90,18 +127,19 @@ const AdminPanel = () => {
       const formData = new FormData();
       formData.append("id", currentDuck.id);
       formData.append("type", currentDuck.type);
-      formData.append("house", currentDuck.house);
+      formData.append("houseId", currentDuck.houseId);
+      formData.append("userId", currentDuck.userId);
       if (currentDuck.photo instanceof File) {
         formData.append("photo", currentDuck.photo);
       }
   
       if (isEditing) {
-        await axios.put(`/api/ducks/${currentDuck._id}`, formData, {
+        await axios.put(`${apiBaseUrl}/ducks/${currentDuck._id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
         formData.append("found", false); // Default value for new ducks
-        await axios.post(`/api/ducks`, formData, {
+        await axios.post(`${apiBaseUrl}/ducks`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }
@@ -114,7 +152,7 @@ const AdminPanel = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`/api/ducks/${currentDuck._id}`);
+      await axios.delete(`${apiBaseUrl}/ducks/${currentDuck._id}`);
       fetchDucks(setDucks, setFilteredDucks); // Fetch the updated list of ducks
       setShowModal(false); // Close the modal
     } catch (error) {
@@ -123,28 +161,51 @@ const AdminPanel = () => {
   };
 
   const openEditModal = (duck) => {
-    setCurrentDuck(duck);
+    setCurrentDuck({
+      _id: duck._id,
+      userId: duck.user._id || "",
+      houseId: duck.house._id || "",
+      id: duck.id,
+      type: duck.type,
+      found: duck.found,
+    });
     setIsEditing(true);
     setShowModal(true);
   };
 
   const openAddModal = () => {
     setCurrentDuck({
+      userId: selectedHouse || "",
+      houseId: selectedUser || "",
       id: "",
       type: "normal",
-      house: selectedHouse || "",
-      photo: "",
+      found: false,
     });
     setIsEditing(false);
     setShowModal(true);
   };
 
-  const handleHouseFilter = (event, newHouse) => {
-    setSelectedHouse(newHouse);
-    if (newHouse) {
+  const handleHouseFilter = (event, newHouseId) => {
+    setSelectedHouse(newHouseId);
+
+    if (newHouseId) {
       setFilteredDucks(
         ducks
-          .filter((duck) => duck.house === newHouse)
+          .filter((duck) => duck.house._id === newHouseId)
+          .sort((a, b) => a.id - b.id)
+      );
+    } else {
+      setFilteredDucks(ducks.sort((a, b) => a.id - b.id));
+    }
+  };
+
+  const handleUserFilter = (event, newUserId) => {
+    setSelectedUser(newUserId);
+
+    if (newUserId) {
+      setFilteredDucks(
+        ducks
+          .filter((duck) => duck.user._id === newUserId)
           .sort((a, b) => a.id - b.id)
       );
     } else {
@@ -176,25 +237,32 @@ const AdminPanel = () => {
             <AddCircleIcon />
           </IconButton>
         </Toolbar>
-        <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+        {/* <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
           <ToggleButtonGroup
             value={selectedHouse}
             exclusive
             onChange={handleHouseFilter}
             aria-label="house filter"
           >
-            <CustomToggleButton value="House1" aria-label="House 1">
-              House 1
+            {houses.map((house) => (
+            <CustomToggleButton value={house._id}>
+              {house.name}
             </CustomToggleButton>
-            <CustomToggleButton value="House2" aria-label="House 2">
-              House 2
+            ))}
+          </ToggleButtonGroup>
+        </Box> */}
+        <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+          <ToggleButtonGroup
+            value={selectedUser}
+            exclusive
+            onChange={handleUserFilter}
+            aria-label="user filter"
+          >
+            {users.map((user) => (
+            <CustomToggleButton value={user._id}>
+              {user.username}
             </CustomToggleButton>
-            <CustomToggleButton value="House3" aria-label="House 3">
-              House 3
-            </CustomToggleButton>
-            <CustomToggleButton value="House4" aria-label="House 4">
-              House 4
-            </CustomToggleButton>
+            ))}
           </ToggleButtonGroup>
         </Box>
       </AppBar>
@@ -272,15 +340,33 @@ const AdminPanel = () => {
                 <Select
                   labelId="duckHouse-label"
                   id="duckHouse"
-                  name="house"
-                  value={currentDuck.house}
+                  name="houseId"
+                  value={currentDuck.houseId}
                   onChange={handleInputChange}
                   required
                 >
-                  <MenuItem value="House1">House 1</MenuItem>
-                  <MenuItem value="House2">House 2</MenuItem>
-                  <MenuItem value="House3">House 3</MenuItem>
-                  <MenuItem value="House4">House 4</MenuItem>
+                  {houses.map((house) => (
+                    <MenuItem key={house._id} value={house._id}>
+                      {house.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="duckUser-label">User</InputLabel>
+                <Select
+                  labelId="duckUser-label"
+                  id="duckUser"
+                  name="userId"
+                  value={currentDuck.userId}
+                  onChange={handleInputChange}
+                  required
+                >
+                  {users.map((user) => (
+                    <MenuItem key={user._id} value={user._id}>
+                      {user.username}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <FormControl fullWidth margin="normal">
@@ -309,7 +395,7 @@ const AdminPanel = () => {
                       />
                     ) : (
                       <img
-                        src={`/api${currentDuck.photo.replace(
+                        src={`${apiBaseUrl}${currentDuck.photo.replace(
                           /\\/g,
                           "/"
                         )}`}
@@ -349,47 +435,49 @@ const AdminPanel = () => {
         </Modal>
 
         <List sx={{ mt: 4 }}>
-  {filteredDucks.map((duck) => (
-    <ListItem
-      key={duck._id}
-      className="duck-list-item"
-      sx={{ cursor: "pointer" }}
-      onClick={() => openEditModal(duck)}
-    >
-      <ListItemText
-        primary={
-          <Typography variant="h5">
-            Pato {duck.id}
-          </Typography>
-        }
-        secondary={
-          <>
-            <Typography variant="body2" color="text.secondary">
-              Casa: {duck.house}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Tipo: {duck.type}
-            </Typography>
-            <Typography
-              variant="body2"
-              color={duck.found ? "success.main" : "error.main"}
+          {filteredDucks.map((duck) => (
+            <ListItem
+              key={duck._id}
+              className="duck-list-item"
+              sx={{ cursor: "pointer" }}
+              onClick={() => openEditModal(duck)}
             >
-              {duck.found ? "Encontrado" : "Escondido"}
-            </Typography>
-          </>
-        }
-      />
-      <ListItemSecondaryAction>
-        <img
-          src={duck.photo ? `/api${duck.photo.replace(/\\/g, '/')}` : 'https://via.placeholder.com/40'}
-          alt={`Duck ${duck.id}`}
-          style={{ width: 40, height: 40, borderRadius: '50%' }}
-        />
-      </ListItemSecondaryAction>
-    </ListItem>
-  ))}
-</List>
-
+              <ListItemText
+                primary={<Typography variant="h5">Pato {duck.id}</Typography>}
+                secondary={
+                  <>
+                    <Typography variant="body2" color="text.secondary">
+                      Casa: {duck.house.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Participante: {duck.user.username}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Tipo: {duck.type}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color={duck.found ? "success.main" : "error.main"}
+                    >
+                      {duck.found ? "Encontrado" : "Escondido"}
+                    </Typography>
+                  </>
+                }
+              />
+              <ListItemSecondaryAction>
+                <img
+                  src={
+                    duck.photo
+                      ? `${apiBaseUrl}/${duck.photo.replace(/\\/g, "/")}`
+                      : "https://via.placeholder.com/40"
+                  }
+                  alt={`Duck ${duck.id}`}
+                  style={{ width: 40, height: 40, borderRadius: "50%" }}
+                />
+              </ListItemSecondaryAction>
+            </ListItem>
+          ))}
+        </List>
       </Container>
     </>
   );

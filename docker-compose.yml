@@ -4,32 +4,36 @@ services:
     image: dedeco133/duckolympics-frontend:latest  # Image pulled from Docker Hub
     container_name: frontend
     ports:
-      - "8080:80"  # Map host port 8080 to container port 3000
+      - "8080:80"  # Map host port 8080 to container port 80 (assuming frontend serves on port 80)
     depends_on:
       - backend
     environment:
-      - REACT_APP_API_URL=http://backend:4000
+      - REACT_APP_API_URL=http://backend:4000  # API URL pointing to the backend service
+    restart: unless-stopped
 
   backend:
     image: dedeco133/duckolympics-backend:latest  # Image pulled from Docker Hub
     container_name: backend
     ports:
-      - "4000:4000"
+      - "4000:4000"  # Expose port 4000 for the backend service
     depends_on:
       - db
     environment:
-      - PORT=4000
-      - MONGODB_URL=mongodb://db:27017/duckdb  # Use the correct service name for MongoDB
+      - PORT=4000  # Port the backend listens to
+      - MONGODB_URL=mongodb://db:27017/duckdb  # MongoDB connection string
+      - UPLOAD_DIR=/app/uploads  # Environment variable for upload directory
     volumes:
       - uploads:/app/uploads  # Mount the uploads directory for persistent storage
+    restart: unless-stopped
 
   db:
     image: mongo:4.4.18  # Use a specific ARM-compatible MongoDB version
     container_name: mongodb
     ports:
-      - "27017:27017"
+      - "27017:27017"  # Expose MongoDB on port 27017
     volumes:
       - mongo-data:/data/db  # Persist MongoDB data
+    restart: unless-stopped
 
 volumes:
   mongo-data:

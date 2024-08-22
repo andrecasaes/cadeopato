@@ -1,12 +1,5 @@
 /* src/components/Login.css */
 
-/* General Styles */
-body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
-
 .main-back {
   padding: 20px; /* Add some padding for better spacing on small screens */
 }
@@ -28,7 +21,7 @@ body, html {
 }
 
 .header-icon {
-  width: 60px; /* Smaller width for mobile */
+  width: 50%; /* Smaller width for mobile */
   height: auto;
   margin-bottom: 10px;
 }
@@ -60,24 +53,22 @@ h2 {
   border: 2px solid var(--primary-color);
 }
 
-.house-img {
+.user-img {
   width: 100px; /* Smaller circular image for mobile */
   height: 100px;
   border-radius: 50%;
   object-fit: cover;
   margin-top: 10px;
 }
-
-.card-title {
-  font-size: 0.9rem; /* Smaller font size for better fit */
-  margin-top: 5px;
-}
-
 /* Button Styles */
 button.btn-primary {
   font-size: 1rem; /* Adjust button font size */
   padding: 10px; /* Add padding for better touch targets */
 }
+.card-text {
+  font-size: 0.8rem; /* Adjust font size for better fit */
+  margin-bottom: 0 !important;
+}	
 
 .house-icon {
   width: 40px;

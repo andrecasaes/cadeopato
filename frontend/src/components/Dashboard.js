@@ -7,7 +7,6 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  Badge,
   ToggleButton,
   LinearProgress,
   Typography,
@@ -19,7 +18,6 @@ import {
 import {
   Check as CheckIcon,
   Clear as ClearIcon,
-  Home as HomeIcon,
   Leaderboard as LeaderboardIcon,
 } from "@mui/icons-material";
 import DuckIcon from "../assets/duck.svg";
@@ -36,13 +34,15 @@ const Dashboard = () => {
   if (!authState.user) {
     window.location.href = "/";
   }
+  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000';
 
   useEffect(() => {
     const fetchDucks = async () => {
       try {
         const response = await axios.get(
-          `/api/ducks/search?house=${authState.user.house.id}`
+          `${apiBaseUrl}/ducks/search?userId=${authState.user.selectedUser._id}`
         );
+
         const houseDucks = response.data;
         setDucks(houseDucks);
 
@@ -57,11 +57,11 @@ const Dashboard = () => {
       }
     };
     fetchDucks();
-  }, [authState.user.house]);
+  }, [apiBaseUrl, authState.user.selectedUser._id]);
 
   const toggleFoundState = async (duckId, found) => {
     try {
-      await axios.put(`/api/ducks/${duckId}`, { found });
+      await axios.put(`${apiBaseUrl}/ducks/${duckId}`, { found });
 
       // Update the state first
       const updatedDucks = ducks.map((duck) =>
@@ -95,14 +95,14 @@ const Dashboard = () => {
       to="/"
     >
       <img
-        src={authState.user.house.img}
-        alt={authState.user.house.name}
+        src={authState.user.selectedUser.profilePicture ? `${apiBaseUrl}/${authState.user.selectedUser.profilePicture}` : DuckIcon}
+        alt={authState.user.selectedUser.house.name}
         className="start-icon"
       />
     </IconButton>
 
     <Typography component="div" sx={{ flexGrow: 1, alignItems: "center", textAlign: "center" }}>
-      <h2 style={{margin:0}}> {authState.user.house.name} Dashboard</h2>
+      <h2 style={{margin:0}}> {authState.user.selectedUser.username} Dashboard</h2>
     </Typography>
     <IconButton
       edge="end"

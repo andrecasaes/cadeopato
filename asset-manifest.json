@@ -1,17 +1,17 @@
 {
   "files": {
     "main.css": "/cadeopato/static/css/main.490ffa92.css",
-    "main.js": "/cadeopato/static/js/main.d80ccaea.js",
+    "main.js": "/cadeopato/static/js/main.9253edd2.js",
     "static/js/453.3fa983df.chunk.js": "/cadeopato/static/js/453.3fa983df.chunk.js",
     "static/media/logo.svg": "/cadeopato/static/media/logo.f946d364edf1577900e5adb8e923f650.svg",
     "static/media/duck.svg": "/cadeopato/static/media/duck.b7d29bb1d27ba7544db754bdd9559cea.svg",
     "index.html": "/cadeopato/index.html",
     "main.490ffa92.css.map": "/cadeopato/static/css/main.490ffa92.css.map",
-    "main.d80ccaea.js.map": "/cadeopato/static/js/main.d80ccaea.js.map",
+    "main.9253edd2.js.map": "/cadeopato/static/js/main.9253edd2.js.map",
     "453.3fa983df.chunk.js.map": "/cadeopato/static/js/453.3fa983df.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.490ffa92.css",
-    "static/js/main.d80ccaea.js"
+    "static/js/main.9253edd2.js"
   ]
 }

@@ -7,7 +7,6 @@ import Ranking from './components/Ranking';
 import { AuthProvider } from './context/AuthContext';
 import particlesConfig from './assets/particlesjs-config.json'; // Import the JSON configuration
 import './App.css'; // Import the global CSS file
-import particlesJS from 'particles.js';
 
 function App() {
   useEffect(() => {

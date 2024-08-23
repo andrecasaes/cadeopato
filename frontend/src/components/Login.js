@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './Login.css'; // Custom CSS file for additional styles
-import { FaSignInAlt } from 'react-icons/fa'; // Icons
 import DuckIcon from '../assets/duck.svg';
 import Logo from '../assets/logo.svg';
 import axios from 'axios';
@@ -16,7 +15,6 @@ const Login = () => {
   const [open, setOpen] = useState(false); // State to control the modal visibility
   const [password, setPassword] = useState(''); // State to store the entered password
   const [error, setError] = useState(''); // State to store any error message
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false); // State to track admin authentication
 
   // Get the API base URL from the environment variables
   const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000';

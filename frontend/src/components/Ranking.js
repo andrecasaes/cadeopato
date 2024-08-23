@@ -3,7 +3,7 @@ import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./Ranking.css"; // Import the custom CSS file
 import { FaCrown } from "react-icons/fa"; // Crown icon for top rank
-import { Typography, AppBar, Toolbar, IconButton, Box, Select, MenuItem, FormControl, InputLabel, ToggleButtonGroup, ToggleButton } from "@mui/material";
+import { Typography, AppBar, Toolbar, IconButton, Box, ToggleButtonGroup, ToggleButton } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
@@ -39,7 +39,7 @@ const Ranking = () => {
       }
     };
     fetchRankings();
-  }, [rankingType]); // Re-fetch rankings when the ranking type changes
+  }, [rankingType, apiBaseUrl]); // Re-fetch rankings when the ranking type changes
 
   const handleRankingTypeChange = (event, newRankingType) => {
     if (newRankingType !== null) {

@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const https = require('https');
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -328,7 +330,14 @@ app.delete('/ducks/:id', async (req, res) => {
   }
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+// Load SSL certificate and key based on environment
+const options = {
+  key: fs.readFileSync(process.env.SSL_KEY_PATH),
+  cert: fs.readFileSync(process.env.SSL_CERT_PATH),
+  ca: process.env.SSL_CA_PATH ? fs.readFileSync(process.env.SSL_CA_PATH) : undefined,
+};
+
+// Start the HTTPS server
+https.createServer(options, app).listen(port, () => {
+  console.log(`Express server running on port ${port}`);
 });

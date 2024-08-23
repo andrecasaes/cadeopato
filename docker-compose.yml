@@ -11,9 +11,8 @@ services:
       - PORT=4000  # Port the backend listens to
       - MONGODB_URL=mongodb://db:27017/duckdb  # MongoDB connection string
       - UPLOAD_DIR=/app/uploads  # Environment variable for upload directory
-      - SSL_KEY_PATH=/app/certs/chain.pem  # Path to the SSL private key
-      - SSL_CERT_PATH=/app/certs/chain.pem  # Path to the SSL certificate
-      - SSL_CA_PATH=/app/certs/chain.pem  # Path to the SSL chain file (if any)
+      - SSL_KEY_PATH=/app/certs/cadeopato.key  # Path to the SSL private key
+      - SSL_CERT_PATH=/app/certs/cadeopato.pem  # Path to the SSL certificate
     volumes:
       - uploads:/app/uploads  # Mount the uploads directory for persistent storage
       - /home/pi/certs:/app/certs  # Mount the certs directory from host to container

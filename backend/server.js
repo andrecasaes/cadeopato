@@ -334,7 +334,6 @@ app.delete('/ducks/:id', async (req, res) => {
 const options = {
   key: fs.readFileSync(process.env.SSL_KEY_PATH),
   cert: fs.readFileSync(process.env.SSL_CERT_PATH),
-  ca: process.env.SSL_CA_PATH ? fs.readFileSync(process.env.SSL_CA_PATH) : undefined,
 };
 
 // Start the HTTPS server

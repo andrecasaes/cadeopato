@@ -185,19 +185,19 @@ const AdminPanel = () => {
     setShowModal(true);
   };
 
-  const handleHouseFilter = (event, newHouseId) => {
-    setSelectedHouse(newHouseId);
+  // const handleHouseFilter = (event, newHouseId) => {
+  //   setSelectedHouse(newHouseId);
 
-    if (newHouseId) {
-      setFilteredDucks(
-        ducks
-          .filter((duck) => duck.house._id === newHouseId)
-          .sort((a, b) => a.id - b.id)
-      );
-    } else {
-      setFilteredDucks(ducks.sort((a, b) => a.id - b.id));
-    }
-  };
+  //   if (newHouseId) {
+  //     setFilteredDucks(
+  //       ducks
+  //         .filter((duck) => duck.house._id === newHouseId)
+  //         .sort((a, b) => a.id - b.id)
+  //     );
+  //   } else {
+  //     setFilteredDucks(ducks.sort((a, b) => a.id - b.id));
+  //   }
+  // };
 
   const handleUserFilter = (event, newUserId) => {
     setSelectedUser(newUserId);

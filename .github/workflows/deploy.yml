@@ -15,6 +15,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Build and Deploy React app to GitHub Pages
+      uses: omkartapale/react-deployment-gh-pages@v1.0.0
+      with:
+        context: ./frontend
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
@@ -23,14 +28,6 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-    - name: Build and push multi-platform frontend image
-      uses: docker/build-push-action@v4
-      with:
-        context: ./frontend
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: dedeco133/duckolympics-frontend:latest
 
     - name: Build and push multi-platform backend image
       uses: docker/build-push-action@v4
@@ -51,8 +48,7 @@ jobs:
         sparse-checkout: 'docker-compose.yml'
         
     - name: Pull the latest images
-      run: |
-        docker pull dedeco133/duckolympics-frontend:latest
+      run:
         docker pull dedeco133/duckolympics-backend:latest
 
     - name: Deploy with Docker Compose

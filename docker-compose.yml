@@ -1,16 +1,5 @@
 version: '3.8'
 services:
-  frontend:
-    image: dedeco133/duckolympics-frontend:latest  # Image pulled from Docker Hub
-    container_name: frontend
-    ports:
-      - "8080:80"  # Map host port 8080 to container port 80 (assuming frontend serves on port 80)
-    depends_on:
-      - backend
-    environment:
-      - REACT_APP_API_URL=http://backend:4000  # API URL pointing to the backend service
-    restart: unless-stopped
-
   backend:
     image: dedeco133/duckolympics-backend:latest  # Image pulled from Docker Hub
     container_name: backend

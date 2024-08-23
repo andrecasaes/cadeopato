@@ -15,10 +15,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Build and Deploy React app to GitHub Pages
-      uses: omkartapale/react-deployment-gh-pages@v1.0.0
-      with:
-        context: ./frontend
+    - name: Deploy with gh-pages
+      run: |
+        git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        npm run deploy -- -u "github-actions-bot <support+actions@github.com>"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2

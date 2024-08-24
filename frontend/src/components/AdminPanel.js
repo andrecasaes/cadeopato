@@ -20,6 +20,7 @@ import {
   Container,
   ToggleButton,
   ToggleButtonGroup,
+  Skeleton,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import {
@@ -28,9 +29,9 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import ImageLoader from "./ImageLoader";
 
-// Styled ToggleButton using CSS Variables
 const CustomToggleButton = styled(ToggleButton)(({ theme }) => ({
   color: "var(--text-color)",
   fontFamily: "var(--font-family)",
@@ -45,33 +46,39 @@ const CustomToggleButton = styled(ToggleButton)(({ theme }) => ({
 }));
 
 const apiBaseUrl =
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:4000";
+  process.env.REACT_APP_API_BASE_URL || "https://localhost:4000";
 
-const fetchDucks = async (setDucks, setFilteredDucks) => {
+const fetchDucks = async (setDucks, setFilteredDucks, setLoading) => {
   try {
     const response = await axios.get(`${apiBaseUrl}/ducks`);
     setDucks(response.data);
     setFilteredDucks(response.data.sort((a, b) => a.id - b.id));
   } catch (error) {
     console.error("Error fetching ducks:", error);
+  } finally {
+    setLoading(false);
   }
 };
 
-const fetchHouses = async (setHouses) => {
+const fetchHouses = async (setHouses, setLoading) => {
   try {
     const response = await axios.get(`${apiBaseUrl}/houses`);
     setHouses(response.data);
   } catch (error) {
     console.error("Error fetching houses:", error);
+  } finally {
+    setLoading(false);
   }
 };
 
-const fetchUsers = async (setUsers) => {
+const fetchUsers = async (setUsers, setLoading) => {
   try {
     const response = await axios.get(`${apiBaseUrl}/users`);
     setUsers(response.data);
   } catch (error) {
     console.error("Error fetching users:", error);
+  } finally {
+    setLoading(false);
   }
 };
 
@@ -91,21 +98,22 @@ const AdminPanel = () => {
   const [selectedUser, setSelectedUser] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchDucks(setDucks, setFilteredDucks);
-    fetchHouses(setHouses);
-    fetchUsers(setUsers);
+    fetchDucks(setDucks, setFilteredDucks, setLoading);
+    fetchHouses(setHouses, setLoading);
+    fetchUsers(setUsers, setLoading);
   }, []);
 
   const navigate = useNavigate();
-  
-  // Assuming you passed the isAdminAuthenticated prop when navigating to the admin page
+
   useEffect(() => {
-    const isAdminAuthenticated = sessionStorage.getItem('isAdminAuthenticated');
+    const isAdminAuthenticated = sessionStorage.getItem("isAdminAuthenticated");
 
     if (!isAdminAuthenticated) {
-      navigate('/'); // Redirect to home or login page if not authenticated
+      navigate("/");
     }
   }, [navigate]);
 
@@ -123,6 +131,7 @@ const AdminPanel = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true); // Set submitting to true
     try {
       const formData = new FormData();
       formData.append("id", currentDuck.id);
@@ -132,29 +141,31 @@ const AdminPanel = () => {
       if (currentDuck.photo instanceof File) {
         formData.append("photo", currentDuck.photo);
       }
-  
+
       if (isEditing) {
         await axios.put(`${apiBaseUrl}/ducks/${currentDuck._id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
-        formData.append("found", false); // Default value for new ducks
+        formData.append("found", false);
         await axios.post(`${apiBaseUrl}/ducks`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }
-      fetchDucks(setDucks, setFilteredDucks); // Fetch the updated list of ducks
-      setShowModal(false); // Close the modal
+      fetchDucks(setDucks, setFilteredDucks, setLoading);
+      setShowModal(false);
     } catch (error) {
       console.error("Error saving duck:", error);
+    } finally {
+      setSubmitting(false); // Set submitting to false after completion
     }
   };
 
   const handleDelete = async () => {
     try {
       await axios.delete(`${apiBaseUrl}/ducks/${currentDuck._id}`);
-      fetchDucks(setDucks, setFilteredDucks); // Fetch the updated list of ducks
-      setShowModal(false); // Close the modal
+      fetchDucks(setDucks, setFilteredDucks, setLoading);
+      setShowModal(false);
     } catch (error) {
       console.error("Error deleting duck:", error);
     }
@@ -167,6 +178,7 @@ const AdminPanel = () => {
       houseId: duck.house._id || "",
       id: duck.id,
       type: duck.type,
+      photo: duck.photo,
       found: duck.found,
     });
     setIsEditing(true);
@@ -184,20 +196,6 @@ const AdminPanel = () => {
     setIsEditing(false);
     setShowModal(true);
   };
-
-  // const handleHouseFilter = (event, newHouseId) => {
-  //   setSelectedHouse(newHouseId);
-
-  //   if (newHouseId) {
-  //     setFilteredDucks(
-  //       ducks
-  //         .filter((duck) => duck.house._id === newHouseId)
-  //         .sort((a, b) => a.id - b.id)
-  //     );
-  //   } else {
-  //     setFilteredDucks(ducks.sort((a, b) => a.id - b.id));
-  //   }
-  // };
 
   const handleUserFilter = (event, newUserId) => {
     setSelectedUser(newUserId);
@@ -237,20 +235,6 @@ const AdminPanel = () => {
             <AddCircleIcon />
           </IconButton>
         </Toolbar>
-        {/* <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
-          <ToggleButtonGroup
-            value={selectedHouse}
-            exclusive
-            onChange={handleHouseFilter}
-            aria-label="house filter"
-          >
-            {houses.map((house) => (
-            <CustomToggleButton value={house._id}>
-              {house.name}
-            </CustomToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        </Box> */}
         <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
           <ToggleButtonGroup
             value={selectedUser}
@@ -259,9 +243,9 @@ const AdminPanel = () => {
             aria-label="user filter"
           >
             {users.map((user) => (
-            <CustomToggleButton value={user._id}>
-              {user.username}
-            </CustomToggleButton>
+              <CustomToggleButton key={user._id} value={user._id}>
+                {user.username}
+              </CustomToggleButton>
             ))}
           </ToggleButtonGroup>
         </Box>
@@ -278,7 +262,7 @@ const AdminPanel = () => {
             alignItems: "center",
             justifyContent: "center",
             marginX: 6,
-            overflowY: "auto", // Allow vertical scrolling if content is too tall
+            overflowY: "auto",
           }}
         >
           <Box
@@ -287,9 +271,9 @@ const AdminPanel = () => {
               p: 4,
               borderRadius: 1,
               boxShadow: 24,
-              maxWidth: "90vw", // Limit modal width on small screens
-              maxHeight: "90vh", // Limit modal height and allow scrolling within
-              overflowY: "auto", // Enable scrolling inside the modal box
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              overflowY: "auto",
               position: "relative",
             }}
           >
@@ -317,7 +301,7 @@ const AdminPanel = () => {
                   name="id"
                   value={currentDuck.id}
                   onChange={handleInputChange}
-                  disabled={isEditing} // Disable ID input if editing
+                  disabled={isEditing}
                   required
                 />
               </FormControl>
@@ -384,27 +368,23 @@ const AdminPanel = () => {
                 {currentDuck.photo && (
                   <Box mt={2} sx={{ textAlign: "center" }}>
                     {currentDuck.photo instanceof File ? (
-                      <img
+                      <ImageLoader
                         src={URL.createObjectURL(currentDuck.photo)}
                         alt="Duck Preview"
-                        style={{
-                          borderRadius: 4,
-                          maxHeight: "200px", // Constrain image height
-                          maxWidth: "100%", // Constrain image width
-                        }}
+                        variant="retangular"
+                        className="duck-image-preview"
+                        height="200px"
                       />
                     ) : (
-                      <img
-                        src={`${apiBaseUrl}${currentDuck.photo.replace(
+                      <ImageLoader
+                        src={`${apiBaseUrl}/${currentDuck.photo.replace(
                           /\\/g,
                           "/"
                         )}`}
+                        variant="retangular"
                         alt="Duck Preview"
-                        style={{
-                          borderRadius: 4,
-                          maxHeight: "200px", // Constrain image height
-                          maxWidth: "100%", // Constrain image width
-                        }}
+                        className="duck-image-preview"
+                        height="200px"
                       />
                     )}
                   </Box>
@@ -416,9 +396,15 @@ const AdminPanel = () => {
                 color="success"
                 fullWidth
                 sx={{ mt: 3 }}
+                disabled={submitting} // Disable button while submitting
               >
-                {isEditing ? "Update Duck" : "Add Duck"}
+                {submitting
+                  ? "Saving..."
+                  : isEditing
+                  ? "Update Duck"
+                  : "Add Duck"}
               </Button>
+
               {isEditing && (
                 <Button
                   variant="contained"
@@ -435,48 +421,71 @@ const AdminPanel = () => {
         </Modal>
 
         <List sx={{ mt: 4 }}>
-          {filteredDucks.map((duck) => (
-            <ListItem
-              key={duck._id}
-              className="duck-list-item"
-              sx={{ cursor: "pointer" }}
-              onClick={() => openEditModal(duck)}
-            >
-              <ListItemText
-                primary={<Typography variant="h5">Pato {duck.id}</Typography>}
-                secondary={
-                  <>
-                    <Typography variant="body2" color="text.secondary">
-                      Casa: {duck.house.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Participante: {duck.user.username}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Tipo: {duck.type}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color={duck.found ? "success.main" : "error.main"}
-                    >
-                      {duck.found ? "Encontrado" : "Escondido"}
-                    </Typography>
-                  </>
-                }
-              />
-              <ListItemSecondaryAction>
-                <img
-                  src={
-                    duck.photo
-                      ? `${apiBaseUrl}/${duck.photo.replace(/\\/g, "/")}`
-                      : "https://via.placeholder.com/40"
-                  }
-                  alt={`Duck ${duck.id}`}
-                  style={{ width: 40, height: 40, borderRadius: "50%" }}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-          ))}
+          {loading
+            ? Array.from(new Array(5)).map((_, index) => (
+                <ListItem key={index} className="duck-list-item">
+                  <ListItemText
+                    primary={
+                      <Skeleton variant="text" width="40%" height={30} />
+                    }
+                    secondary={
+                      <>
+                        <Skeleton variant="text" width="60%" height={20} />
+                      </>
+                    }
+                  />
+                  <ListItemSecondaryAction>
+                    <Skeleton variant="circular" width={40} height={40} />
+                  </ListItemSecondaryAction>
+                </ListItem>
+              ))
+            : filteredDucks.map((duck) => (
+                <ListItem
+                  key={duck._id}
+                  className="duck-list-item"
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => openEditModal(duck)}
+                >
+                  <ListItemText
+                    primary={
+                      <Typography variant="h5">Pato {duck.id}</Typography>
+                    }
+                    secondary={
+                      <>
+                        <Typography variant="body2" color="text.secondary">
+                          Casa: {duck.house.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Participante: {duck.user.username}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Tipo: {duck.type}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color={duck.found ? "success.main" : "error.main"}
+                        >
+                          {duck.found ? "Encontrado" : "Escondido"}
+                        </Typography>
+                      </>
+                    }
+                  />
+                  <ListItemSecondaryAction>
+                    <ImageLoader
+                      src={
+                        duck.photo
+                          ? `${apiBaseUrl}/${duck.photo.replace(/\\/g, "/")}`
+                          : "https://via.placeholder.com/40"
+                      }
+                      alt={`Duck ${duck.id}`}
+                      variant="circular"
+                      className="duck-image"
+                      width={40}
+                      height={40}
+                    />
+                  </ListItemSecondaryAction>
+                </ListItem>
+              ))}
         </List>
       </Container>
     </>

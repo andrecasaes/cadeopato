@@ -330,6 +330,32 @@ app.delete('/ducks/:id', async (req, res) => {
   }
 });
 
+// Delete a user by ID
+app.delete('/users/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    await user.deleteOne();
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Delete a house by ID
+app.delete('/houses/:id', async (req, res) => {
+  try {
+    const house = await House.findById(req.params.id);
+    if (!house) return res.status(404).json({ message: 'House not found' });
+
+    await house.deleteOne();
+    res.json({ message: 'House deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Load SSL certificate and key based on environment
 const options = {
   key: fs.readFileSync(process.env.SSL_KEY_PATH),

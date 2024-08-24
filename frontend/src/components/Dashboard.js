@@ -14,6 +14,7 @@ import {
   Toolbar,
   IconButton,
   Box,
+  Skeleton,
 } from "@mui/material";
 import {
   Check as CheckIcon,
@@ -21,11 +22,13 @@ import {
   Leaderboard as LeaderboardIcon,
 } from "@mui/icons-material";
 import DuckIcon from "../assets/duck.svg";
+import ImageLoader from "../components/ImageLoader";
 import "./Dashboard.css"; // Import the custom CSS file
 
 const Dashboard = () => {
   const { authState } = useContext(AuthContext);
   const [ducks, setDucks] = useState([]);
+  const [loading, setLoading] = useState(true); // State to track API call loading
   const [foundPercentage, setFoundPercentage] = useState(0);
   const [totalNumber, setTotalNumber] = useState(0);
   const [foundNumber, setFoundNumber] = useState(0);
@@ -34,7 +37,9 @@ const Dashboard = () => {
   if (!authState.user) {
     window.location.href = "/";
   }
-  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000';
+
+  const apiBaseUrl =
+    process.env.REACT_APP_API_BASE_URL || "https://localhost:4000";
 
   useEffect(() => {
     const fetchDucks = async () => {
@@ -54,6 +59,8 @@ const Dashboard = () => {
         setTotalNumber(houseDucks.length);
       } catch (error) {
         console.error("Error fetching ducks:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchDucks();
@@ -85,75 +92,106 @@ const Dashboard = () => {
 
   return (
     <>
-<AppBar className="Appbar" position="sticky" color="default">
-  <Toolbar>
-    <IconButton
-      edge="start"
-      color="inherit"
-      aria-label="home"
-      component={Link}
-      to="/"
-    >
-      <img
-        src={authState.user.selectedUser.profilePicture ? `${apiBaseUrl}/${authState.user.selectedUser.profilePicture}` : DuckIcon}
-        alt={authState.user.selectedUser.house.name}
-        className="start-icon"
-      />
-    </IconButton>
+      <AppBar className="Appbar" position="sticky" color="default">
+        <Toolbar>
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="home"
+            component={Link}
+            to="/"
+          >
+            <ImageLoader
+              src={
+                authState.user.selectedUser.profilePicture
+                  ? `${apiBaseUrl}/${authState.user.selectedUser.profilePicture}`
+                  : DuckIcon
+              }
+              alt={authState.user.selectedUser.house.name}
+              variant="circular"
+              className="start-icon"
+              width={40}
+              height={40}
+            />
+          </IconButton>
 
-    <Typography component="div" sx={{ flexGrow: 1, alignItems: "center", textAlign: "center" }}>
-      <h2 style={{margin:0}}> {authState.user.selectedUser.username} Dashboard</h2>
-    </Typography>
-    <IconButton
-      edge="end"
-      color="inherit"
-      component={Link}
-      to="/ranking"
-      aria-label="ranking"
-    >
-      <LeaderboardIcon />
-    </IconButton>
-  </Toolbar>
-  <Box sx={{ paddingX: 2, paddingBottom: 2 }}>
-    <LinearProgress variant="determinate" value={foundPercentage} />
-    <Typography variant="body2" color="textSecondary" align="center">
-      {foundNumber} de {totalNumber} patos encontrados
-    </Typography>
-  </Box>
-</AppBar>
+          <Typography
+            component="div"
+            sx={{ flexGrow: 1, alignItems: "center", textAlign: "center" }}
+          >
+            <h2 style={{ margin: 0 }}>
+              {" "}
+              {authState.user.selectedUser.username} Dashboard
+            </h2>
+          </Typography>
+          <IconButton
+            edge="end"
+            color="inherit"
+            component={Link}
+            to="/ranking"
+            aria-label="ranking"
+          >
+            <LeaderboardIcon />
+          </IconButton>
+        </Toolbar>
+        <Box sx={{ paddingX: 2, paddingBottom: 2 }}>
+          <LinearProgress variant="determinate" value={foundPercentage} />
+          <Typography variant="body2" color="textSecondary" align="center">
+            {foundNumber} de {totalNumber} patos encontrados
+          </Typography>
+        </Box>
+      </AppBar>
 
       <div className="container py-4">
         <List>
-          {ducks.map((duck) => (
-            <ListItem key={duck._id} className="duck-list-item">
-              <ListItemText
-                primary={<h5>Pato {duck.id}</h5>}
-                secondary={
-                  <>
-                    <span>Tipo: {duck.type}</span>
-                  </>
-                }
-              />
-              <ListItemSecondaryAction>
-                <ToggleButton
-                  value="check"
-                  selected={duck.found}
-                  onChange={() => toggleFoundState(duck._id, !duck.found)}
-                  className={
-                    duck.found
-                      ? "toggle-button-selected"
-                      : "toggle-button-unselected"
-                  }
-                >
-                  {duck.found ? (
-                    <CheckIcon style={{ color: "#28a745" }} />
-                  ) : (
-                    <ClearIcon style={{ color: "#dc3545" }} />
-                  )}
-                </ToggleButton>
-              </ListItemSecondaryAction>
-            </ListItem>
-          ))}
+          {loading
+            ? Array.from(new Array(5)).map((_, index) => (
+                <ListItem key={index} className="duck-list-item">
+                  <ListItemText
+                    primary={
+                      <Skeleton variant="text" width="40%" height={30} />
+                    }
+                    secondary={
+                      <>
+                        <Skeleton variant="text" width="60%" height={20} />
+                      </>
+                    }
+                  />
+                  <ListItemSecondaryAction>
+                    <Skeleton variant="retangular" width={40} height={40} />
+                  </ListItemSecondaryAction>
+                </ListItem>
+              ))
+            : ducks.map((duck) => (
+                <ListItem key={duck._id} className="duck-list-item">
+                  <ListItemText
+                    primary={<h5>Pato {duck.id}</h5>}
+                    secondary={
+                      <>
+                        <span>Tipo: {duck.type}</span>
+                      </>
+                    }
+                  />
+                  <ListItemSecondaryAction>
+                    <ToggleButton
+                      value="check"
+                      selected={duck.found}
+                      onChange={() => toggleFoundState(duck._id, !duck.found)}
+                      className={
+                        duck.found
+                          ? "toggle-button-selected"
+                          : "toggle-button-unselected"
+                      }
+                    >
+                      {duck.found ? (
+                        <CheckIcon style={{ color: "#28a745" }} />
+                      ) : (
+                        <ClearIcon style={{ color: "#dc3545" }} />
+                      )}
+                    </ToggleButton>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              ))}
         </List>
       </div>
     </>

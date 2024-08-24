@@ -15,6 +15,8 @@ import {
   IconButton,
   Box,
   Skeleton,
+  Alert,
+  CircularProgress,
 } from "@mui/material";
 import {
   Check as CheckIcon,
@@ -32,6 +34,8 @@ const Dashboard = () => {
   const [foundPercentage, setFoundPercentage] = useState(0);
   const [totalNumber, setTotalNumber] = useState(0);
   const [foundNumber, setFoundNumber] = useState(0);
+  const [error, setError] = useState(null); // State to handle errors
+  const [toggleLoading, setToggleLoading] = useState(false); // State to prevent rapid toggling
 
   // Redirect to login if no user is logged in
   if (!authState.user) {
@@ -43,6 +47,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchDucks = async () => {
+      setLoading(true);
+      setError(null); // Reset error before fetching
       try {
         const response = await axios.get(
           `${apiBaseUrl}/ducks/search?userId=${authState.user.selectedUser._id}`
@@ -59,6 +65,9 @@ const Dashboard = () => {
         setTotalNumber(houseDucks.length);
       } catch (error) {
         console.error("Error fetching ducks:", error);
+        setError(
+          "Não foi possível carregar os dados. Por favor, contate o administrador."
+        );
       } finally {
         setLoading(false);
       }
@@ -67,6 +76,7 @@ const Dashboard = () => {
   }, [apiBaseUrl, authState.user.selectedUser._id]);
 
   const toggleFoundState = async (duckId, found) => {
+    setToggleLoading(true);
     try {
       await axios.put(`${apiBaseUrl}/ducks/${duckId}`, { found });
 
@@ -87,6 +97,11 @@ const Dashboard = () => {
         `Error marking duck as ${found ? "found" : "unfound"}:`,
         error
       );
+      setError(
+        "Não foi possível atualizar o status do pato. Por favor, tente novamente."
+      );
+    } finally {
+      setToggleLoading(false);
     }
   };
 
@@ -143,6 +158,11 @@ const Dashboard = () => {
       </AppBar>
 
       <div className="container py-4">
+        {error && (
+          <Alert severity="error" sx={{ marginBottom: 2 }}>
+            {error}
+          </Alert>
+        )}
         <List>
           {loading
             ? Array.from(new Array(5)).map((_, index) => (
@@ -158,7 +178,7 @@ const Dashboard = () => {
                     }
                   />
                   <ListItemSecondaryAction>
-                    <Skeleton variant="retangular" width={40} height={40} />
+                    <Skeleton variant="rectangular" width={40} height={40} />
                   </ListItemSecondaryAction>
                 </ListItem>
               ))
@@ -182,8 +202,11 @@ const Dashboard = () => {
                           ? "toggle-button-selected"
                           : "toggle-button-unselected"
                       }
+                      disabled={toggleLoading}
                     >
-                      {duck.found ? (
+                      {toggleLoading ? (
+                        <CircularProgress size={24} sx={{ color: "var(--accent-color)" }} /> // Display a spinner inside the button
+                      ) : duck.found ? (
                         <CheckIcon style={{ color: "#28a745" }} />
                       ) : (
                         <ClearIcon style={{ color: "#dc3545" }} />

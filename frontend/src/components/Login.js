@@ -15,6 +15,7 @@ import {
   DialogTitle,
   TextField,
   Skeleton,
+  Alert,
 } from "@mui/material";
 import ImageLoader from "./ImageLoader";
 
@@ -26,6 +27,8 @@ const Login = () => {
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [apiError, setApiError] = useState(""); // State to track API error
+
 
   const apiBaseUrl =
     process.env.REACT_APP_API_BASE_URL || "https://localhost:4000";
@@ -40,11 +43,13 @@ const Login = () => {
       })
       .catch((error) => {
         console.error("Error fetching users:", error);
+        setApiError("Erro ao buscar os dados. Tente novamente mais tarde.");
       })
       .finally(() => {
         setLoading(false);
       });
   }, [apiBaseUrl]);
+  
 
   const handleLogin = (selectedUser) => {
     login({ selectedUser }, "mock-token");
@@ -96,48 +101,54 @@ const Login = () => {
         </div>
         <div className="container text-center mb-3">
           <h5>Selecione o seu perfil</h5>
-          <div className="row">
-            {loading
-              ? Array.from(new Array(4)).map((_, index) => (
-                  <div key={index} className="col-6 mb-4 user-card">
-                    <div className="card p-2 d-flex flex-column justify-content-center">
-                      <div className="d-flex justify-content-center">
-                        <Skeleton variant="circular" width={90} height={90} />
-                      </div>
-                      <div className="card-body">
-                        <Skeleton variant="text" height={30} />
-                        <Skeleton variant="text" width="60%" height={20} />
-                      </div>
-                    </div>
-                  </div>
-                ))
-              : users.map((user) => (
-                  <div
-                    key={user._id}
-                    className="col-6 mb-4 user-card"
-                    onClick={() => handleLogin(user)}
-                  >
-                    <div className="card p-2 d-flex flex-column justify-content-center">
-                      <div className="d-flex justify-content-center">
-                        <ImageLoader
-                          src={
-                            user.profilePicture
-                              ? `${apiBaseUrl}/${user.profilePicture}`
-                              : DuckIcon
-                          }
-                          variant="circular"
-                          alt={user.username}
-                          className="card-img-top user-img mx-auto d-block"
-                        />
-                      </div>
-                      <div className="card-body">
-                        <h5>{user.username}</h5>
-                        <p className="card-text">{user.house?.name}</p>
+          {apiError ? (
+            <Alert severity="error" sx={{ marginBottom: 2 }}>
+            {apiError}
+          </Alert>
+          ) : (
+            <div className="row">
+              {loading
+                ? Array.from(new Array(4)).map((_, index) => (
+                    <div key={index} className="col-6 mb-4 user-card">
+                      <div className="card p-2 d-flex flex-column justify-content-center">
+                        <div className="d-flex justify-content-center">
+                          <Skeleton variant="circular" width={90} height={90} />
+                        </div>
+                        <div className="card-body">
+                          <Skeleton variant="text" height={30} />
+                          <Skeleton variant="text" width="60%" height={20} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-          </div>
+                  ))
+                : users.map((user) => (
+                    <div
+                      key={user._id}
+                      className="col-6 mb-4 user-card"
+                      onClick={() => handleLogin(user)}
+                    >
+                      <div className="card p-2 d-flex flex-column justify-content-center">
+                        <div className="d-flex justify-content-center">
+                          <ImageLoader
+                            src={
+                              user.profilePicture
+                                ? `${apiBaseUrl}/${user.profilePicture}`
+                                : DuckIcon
+                            }
+                            variant="circular"
+                            alt={user.username}
+                            className="card-img-top user-img mx-auto d-block"
+                          />
+                        </div>
+                        <div className="card-body">
+                          <h5>{user.username}</h5>
+                          <p className="card-text">{user.house?.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+            </div>
+          )}
           <div className="d-flex justify-content-center mt-4">
             <button className="btn btn-primary" onClick={handleAdmin}>
               admin
@@ -145,7 +156,7 @@ const Login = () => {
           </div>
         </div>
       </div>
-
+  
       {/* Password Prompt Modal */}
       <Dialog open={open} onClose={handleClose} disableEscapeKeyDown>
         <DialogTitle>Acesso Admin</DialogTitle>
@@ -178,7 +189,7 @@ const Login = () => {
         </DialogActions>
       </Dialog>
     </div>
-  );
+  );  
 };
 
 export default Login;

@@ -204,14 +204,16 @@ app.get('/rankings', async (req, res) => {
     const { by } = req.query; // Get the query parameter 'by', which can be 'house' or 'user'
     
     const ducks = await Duck.find().populate('house').populate('user');
-    
+
     // Determine how to accumulate points based on the 'by' parameter
     const pointsAccumulator = ducks.reduce((acc, duck) => {
       if (duck.found) {
+        const points = duck.type === 'oclinhos' ? 3 : 1; // 3 points for 'oclinhos', 1 point for 'normal'
+        
         if (by === 'user' && duck.user) {
-          acc[duck.user.username] = (acc[duck.user.username] || 0) + 1;
+          acc[duck.user.username] = (acc[duck.user.username] || 0) + points;
         } else if (by === 'house' && duck.house) {
-          acc[duck.house.name] = (acc[duck.house.name] || 0) + 1;
+          acc[duck.house.name] = (acc[duck.house.name] || 0) + points;
         }
       }
       return acc;
@@ -226,6 +228,7 @@ app.get('/rankings', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
 
 
 // Create a new duck with photo upload

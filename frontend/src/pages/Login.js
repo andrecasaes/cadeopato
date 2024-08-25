@@ -17,7 +17,7 @@ import {
   Skeleton,
   Alert,
 } from "@mui/material";
-import ImageLoader from "./ImageLoader";
+import ImageLoader from "../components/ImageLoader";
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -28,7 +28,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [apiError, setApiError] = useState(""); // State to track API error
-
 
   const apiBaseUrl =
     process.env.REACT_APP_API_BASE_URL || "https://localhost:4000";
@@ -49,7 +48,6 @@ const Login = () => {
         setLoading(false);
       });
   }, [apiBaseUrl]);
-  
 
   const handleLogin = (selectedUser) => {
     login({ selectedUser }, "mock-token");
@@ -103,8 +101,8 @@ const Login = () => {
           <h5>Selecione o seu perfil</h5>
           {apiError ? (
             <Alert severity="error" sx={{ marginBottom: 2 }}>
-            {apiError}
-          </Alert>
+              {apiError}
+            </Alert>
           ) : (
             <div className="row">
               {loading
@@ -150,13 +148,21 @@ const Login = () => {
             </div>
           )}
           <div className="d-flex justify-content-center mt-4">
-            <button className="btn btn-primary" onClick={handleAdmin}>
-              admin
+            <button
+              className="btn"
+              style={{
+                backgroundColor: "var(--primary-color)",
+                color: "white",
+                fontFamily: "var(--font-family)",
+              }}
+              onClick={handleAdmin}
+            >
+              ADMIN
             </button>
           </div>
         </div>
       </div>
-  
+
       {/* Password Prompt Modal */}
       <Dialog open={open} onClose={handleClose} disableEscapeKeyDown>
         <DialogTitle>Acesso Admin</DialogTitle>
@@ -189,7 +195,7 @@ const Login = () => {
         </DialogActions>
       </Dialog>
     </div>
-  );  
+  );
 };
 
 export default Login;

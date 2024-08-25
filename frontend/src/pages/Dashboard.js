@@ -19,13 +19,13 @@ import {
   CircularProgress,
 } from "@mui/material";
 import {
+  ArrowBack,
   Check as CheckIcon,
   Clear as ClearIcon,
   Leaderboard as LeaderboardIcon,
 } from "@mui/icons-material";
-import DuckIcon from "../assets/duck.svg";
-import ImageLoader from "../components/ImageLoader";
 import "./Dashboard.css"; // Import the custom CSS file
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { authState } = useContext(AuthContext);
@@ -36,6 +36,7 @@ const Dashboard = () => {
   const [foundNumber, setFoundNumber] = useState(0);
   const [error, setError] = useState(null); // State to handle errors
   const [toggleLoading, setToggleLoading] = useState(false); // State to prevent rapid toggling
+  const navigate = useNavigate();
 
   // Redirect to login if no user is logged in
   if (!authState.user) {
@@ -109,25 +110,13 @@ const Dashboard = () => {
     <>
       <AppBar className="Appbar" position="sticky" color="default">
         <Toolbar>
-          <IconButton
+        <IconButton
             edge="start"
             color="inherit"
-            aria-label="home"
-            component={Link}
-            to="/"
+            aria-label="back"
+            onClick={() => navigate(-1)}
           >
-            <ImageLoader
-              src={
-                authState.user.selectedUser.profilePicture
-                  ? `${apiBaseUrl}/${authState.user.selectedUser.profilePicture}`
-                  : DuckIcon
-              }
-              alt={authState.user.selectedUser.house.name}
-              variant="circular"
-              className="start-icon"
-              width={40}
-              height={40}
-            />
+            <ArrowBack />
           </IconButton>
 
           <Typography

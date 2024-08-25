@@ -8,30 +8,14 @@ import {
   AppBar,
   Toolbar,
   IconButton,
-  Box,
-  ToggleButtonGroup,
-  ToggleButton,
   Skeleton,
-  Alert, // Import Alert for error messages
+  Alert,
+  Tabs,
+  Tab, // Import Alert for error messages
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
-import { styled } from "@mui/material/styles";
 
-// Styled ToggleButton using CSS Variables
-const CustomToggleButton = styled(ToggleButton)(({ theme }) => ({
-  color: "var(--text-color)",
-  fontWeight: "bold",
-  fontFamily: "var(--font-family)",
-  "&:hover": {
-    backgroundColor: "var(--primary-color-hover)",
-    color: "white",
-  },
-  "&.Mui-selected": {
-    backgroundColor: "var(--primary-color)",
-    color: "white",
-  },
-}));
 
 const Ranking = () => {
   const [rankings, setRankings] = useState([]);
@@ -89,17 +73,29 @@ const Ranking = () => {
             <h2 style={{ margin: 0 }}>Ranking</h2>
           </Typography>
         </Toolbar>
-        <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
-          <ToggleButtonGroup
-            value={rankingType}
-            exclusive
-            onChange={handleRankingTypeChange}
-            aria-label="user filter"
-          >
-            <CustomToggleButton value="user">Participante</CustomToggleButton>
-            <CustomToggleButton value="house">Casa</CustomToggleButton>
-          </ToggleButtonGroup>
-        </Box>
+        <Tabs
+          value={rankingType}
+          onChange={handleRankingTypeChange}
+          aria-label="Ranking Tabs"
+          centered
+          sx={{
+            "& .MuiTab-root": {
+              color: "var(--text-color)", // Text color of the tab
+              fontFamily: "var(--font-family)", // Custom font
+              "&.Mui-selected": {
+                color: "var(--primary-color)", // Color of the selected tab
+                fontWeight: "bold", // Bold text for the selected tab
+              },
+            },
+            "& .MuiTabs-indicator": {
+              backgroundColor: "var(--primary-color)", // Indicator color
+              height: "4px",
+            },
+          }}
+        >
+          <Tab label="Participante" value="user" />
+          <Tab label="Casa" value="house" />
+        </Tabs>
       </AppBar>
 
       <div className="container py-4">

@@ -359,6 +359,76 @@ app.delete('/houses/:id', async (req, res) => {
   }
 });
 
+// Bulk create ducks with photo upload
+app.post('/ducks/bulk', upload.array('photos'), async (req, res) => {
+  const ducksData = req.body.ducks;
+  const files = req.files;
+
+  const ducks = ducksData.map((duckData, index) => {
+    const photo = files && files[index] ? `uploads/${files[index].filename}` : null;
+
+    return new Duck({
+      _id: new mongoose.Types.ObjectId(),
+      id: duckData.id,
+      type: duckData.type,
+      house: duckData.houseId,
+      photo,
+      found: duckData.found,
+      user: duckData.userId,
+    });
+  });
+
+  try {
+    const savedDucks = await Duck.insertMany(ducks);
+    res.status(201).json(savedDucks);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Bulk create houses
+app.post('/houses/bulk', async (req, res) => {
+  const housesData = req.body.houses;
+
+  const houses = housesData.map(houseData => new House({
+    _id: new mongoose.Types.ObjectId(),
+    name: houseData.name,
+    address: houseData.address,
+  }));
+
+  try {
+    const savedHouses = await House.insertMany(houses);
+    res.status(201).json(savedHouses);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Bulk create users with profile pictures
+app.post('/users/bulk', upload.array('profilePictures'), async (req, res) => {
+  const usersData = req.body.users;
+  const files = req.files;
+
+  const users = usersData.map((userData, index) => {
+    const profilePicture = files && files[index] ? `uploads/${files[index].filename}` : null;
+
+    return new User({
+      _id: new mongoose.Types.ObjectId(),
+      username: userData.username,
+      house: userData.houseId,
+      profilePicture,
+    });
+  });
+
+  try {
+    const savedUsers = await User.insertMany(users);
+    res.status(201).json(savedUsers);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+
 // Load SSL certificate and key based on environment
 const options = {
   key: fs.readFileSync(process.env.SSL_KEY_PATH),

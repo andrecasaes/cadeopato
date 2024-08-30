@@ -8,6 +8,7 @@ import {
   Skeleton,
 } from "@mui/material";
 import ImageLoader from "./ImageLoader";
+import "./ItemList.css"
 
 const ItemList = ({
   loading,
@@ -21,7 +22,7 @@ const ItemList = ({
     <List sx={{ mt: 4 }}>
       {loading
         ? Array.from(new Array(5)).map((_, index) => (
-            <ListItem key={index} className={`${type}-list-item`}>
+            <ListItem key={index} className={`admin-list-item`}>
               <ListItemText
                 primary={<Skeleton variant="text" width="40%" height={30} />}
                 secondary={
@@ -38,7 +39,7 @@ const ItemList = ({
         : items.map((item) => (
             <ListItem
               key={item._id}
-              className={`duck-list-item`}
+              className={`admin-list-item`}
               sx={{ cursor: "pointer" }}
               onClick={() => onEdit(item)}
             >

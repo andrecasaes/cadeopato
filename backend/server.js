@@ -275,6 +275,28 @@ app.put('/ducks/:id', upload.single('photo'), async (req, res) => {
   }
 });
 
+// Update only the image of an existing duck by custom ID
+app.put('/ducks/image/:customId', upload.single('photo'), async (req, res) => {
+  try {
+    // Find duck by custom ID instead of internal _id
+    const duck = await Duck.findOne({ id: req.params.customId });
+    if (!duck) return res.status(404).json({ message: 'Duck not found' });
+
+    // Update photo if a new file is uploaded
+    if (req.file) {
+      duck.photo = `uploads/${req.file.filename}`;
+    } else {
+      return res.status(400).json({ message: 'No photo file provided' });
+    }
+
+    const updatedDuck = await duck.save();
+    res.json(updatedDuck);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+
 // Update a duck's foundBy field when a duck is found
 app.put('/ducks/:id/found', async (req, res) => {
   try {

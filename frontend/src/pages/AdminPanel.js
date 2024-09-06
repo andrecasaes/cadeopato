@@ -10,15 +10,14 @@ import {
   Tab,
   Fab,
 } from "@mui/material";
-import {
-  ArrowBack
-} from "@mui/icons-material";
+import { ArrowBack } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaCamera } from "react-icons/fa";
 import DuckModal from "../components/DuckModal";
 import HouseModal from "../components/HouseModal";
 import UserModal from "../components/UserModal";
 import ItemList from "../components/ItemList";
+import QuickPhotoUpload from '../components/QuickPhotoUpload';
 
 const apiBaseUrl =
   process.env.REACT_APP_API_BASE_URL || "https://localhost:4000";
@@ -102,6 +101,7 @@ const AdminPanel = () => {
   const [houseSubmitting, setHouseSubmitting] = useState(false);
   const [userSubmitting, setUserSubmitting] = useState(false);
   const [filteredItems, setFilteredItems] = useState([]);
+  const [openQuickUpload, setOpenQuickUpload] = useState(false);
 
   const navigate = useNavigate();
 
@@ -409,11 +409,28 @@ const AdminPanel = () => {
     }
   };
 
+  // Function to open the quick upload modal
+  const handleOpenQuickUpload = () => {
+    setOpenQuickUpload(true);
+  };
+
+  // Function to close the quick upload modal
+  const handleCloseQuickUpload = () => {
+    setOpenQuickUpload(false);
+  };
+
+  // Callback after successful upload to refresh the duck list
+  const handleUploadSuccess = () => {
+    // Logic to refresh your duck list here
+    setOpenQuickUpload(false);
+    // Fetch ducks again if needed
+  };
+
   return (
     <>
       <AppBar className="Appbar" position="sticky" color="default">
         <Toolbar>
-        <IconButton
+          <IconButton
             edge="start"
             color="inherit"
             aria-label="back"
@@ -471,6 +488,24 @@ const AdminPanel = () => {
       >
         <FaPlus />
       </Fab>
+      <Fab
+        color="primary"
+        aria-label="camera"
+        onClick={handleOpenQuickUpload}
+        sx={{
+          position: "fixed",
+          bottom: 100,
+          right: 16,
+          backgroundColor: "var(--accent-color)", // Use the accent color for the FAB
+          "&:hover": {
+            backgroundColor: "var(--primary-color-hover)", // Hover color for the FAB
+          },
+          color: "white", // Text color inside the FAB
+        }}
+        
+      >
+        <FaCamera />
+      </Fab>
 
       <Container>
         <DuckModal
@@ -509,6 +544,11 @@ const AdminPanel = () => {
           onDelete={handleUserDelete}
           submitting={userSubmitting}
           apiBaseUrl={apiBaseUrl}
+        />
+        <QuickPhotoUpload
+          open={openQuickUpload}
+          handleClose={handleCloseQuickUpload}
+          onUploadSuccess={handleUploadSuccess}
         />
 
         <ItemList

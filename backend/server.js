@@ -47,8 +47,10 @@ const duckSchema = new mongoose.Schema({
   house: { type: mongoose.Schema.Types.ObjectId, ref: 'House' },
   photo: String, // Path to the photo file
   found: Boolean,
+  foundDate: { type: Date }, // Date when the duck was found
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Reference to the user who found the duck
 });
+
 
 // Define the models
 const House = mongoose.model('House', houseSchema);
@@ -190,26 +192,58 @@ app.get('/ducks/search', async (req, res) => {
 // Get a single duck by ID
 app.get('/ducks/:id', async (req, res) => {
   try {
-    const duck = await Duck.findById(req.params.id).populate('foundBy').populate('house');
+    const duck = await Duck.findById(req.params.id).populate('user').populate('house');
     if (!duck) return res.status(404).json({ message: 'Duck not found' });
     res.json(duck);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
+// Set the competition start date
+const competitionStartDate = new Date('2024-09-08');
+
+// Function to get date at midnight to avoid time component issues
+function getMidnightDate(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
 
 // Get rankings based on found ducks, by house or by user
 app.get('/rankings', async (req, res) => {
   try {
-    const { by } = req.query; // Get the query parameter 'by', which can be 'house' or 'user'
+    const { by } = req.query; // 'by' can be 'house' or 'user'
     
     const ducks = await Duck.find().populate('house').populate('user');
 
     // Determine how to accumulate points based on the 'by' parameter
     const pointsAccumulator = ducks.reduce((acc, duck) => {
-      if (duck.found) {
-        const points = duck.type === 'oclinhos' ? 3 : 1; // 3 points for 'oclinhos', 1 point for 'normal'
-        
+      if (duck.found && duck.foundDate) {
+        // Get the dates at midnight to standardize them
+        const competitionDate = getMidnightDate(competitionStartDate);
+        const foundDate = getMidnightDate(new Date(duck.foundDate));
+
+        // Calculate the number of weeks since the competition started
+        const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000;
+        const weeksSinceStart = Math.floor((foundDate - competitionDate) / millisecondsPerWeek);
+
+        // Assign points based on the duck type and weeks since competition start
+        let points = 1; // Default points for normal ducks
+        if (duck.type === 'oclinhos') {
+          if (weeksSinceStart < 0) {
+            points = 5; // Found before competition start
+          } else if (weeksSinceStart === 0) {
+            points = 5; // First week
+          } else if (weeksSinceStart === 1) {
+            points = 4; // Second week
+          } else if (weeksSinceStart === 2) {
+            points = 3; // Third week
+          } else if (weeksSinceStart === 3) {
+            points = 2; // Fourth week
+          } else {
+            points = 1; // After fourth week
+          }
+        }
+
+        // Accumulate points by user or house
         if (by === 'user' && duck.user) {
           acc[duck.user.username] = (acc[duck.user.username] || 0) + points;
         } else if (by === 'house' && duck.house) {
@@ -220,7 +254,8 @@ app.get('/rankings', async (req, res) => {
     }, {});
 
     // Convert the accumulated points into a sortable array
-    const rankings = Object.entries(pointsAccumulator).map(([entity, points]) => ({ entity, points }))
+    const rankings = Object.entries(pointsAccumulator)
+      .map(([entity, points]) => ({ entity, points }))
       .sort((a, b) => b.points - a.points);
 
     res.json(rankings);
@@ -228,8 +263,6 @@ app.get('/rankings', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
-
 
 // Create a new duck with photo upload
 app.post('/ducks', upload.single('photo'), async (req, res) => {
@@ -260,11 +293,24 @@ app.put('/ducks/:id', upload.single('photo'), async (req, res) => {
     const duck = await Duck.findById(req.params.id);
     if (!duck) return res.status(404).json({ message: 'Duck not found' });
 
-    const { id, type, houseId, found, userId } = req.body;
+    const { id, type, houseId, found, foundDate, userId } = req.body;
+    
     if (id !== undefined) duck.id = id;
     if (type !== undefined) duck.type = type;
     if (houseId !== undefined) duck.house = houseId;
-    if (found !== undefined) duck.found = found;
+    if (found !== undefined) {
+      duck.found = found;
+      
+      // If found is true and foundDate is not provided, set the current date
+      if (found == true && !foundDate) {
+        duck.foundDate = new Date();
+      }
+      
+      if (found == false) {
+        duck.foundDate = null;
+      }
+    }
+    if (foundDate !== undefined) duck.foundDate = foundDate; // If the date is explicitly provided, set it
     if (userId !== undefined) duck.user = userId;
     if (req.file) duck.photo = `uploads/${req.file.filename}`; // Update photo if a new file is uploaded
 
@@ -274,6 +320,7 @@ app.put('/ducks/:id', upload.single('photo'), async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 });
+
 
 // Update only the image of an existing duck by custom ID
 app.put('/ducks/image/:customId', upload.single('photo'), async (req, res) => {
@@ -297,13 +344,14 @@ app.put('/ducks/image/:customId', upload.single('photo'), async (req, res) => {
 });
 
 
-// Update a duck's foundBy field when a duck is found
+// Update a duck's foundBy field and foundDate when a duck is found
 app.put('/ducks/:id/found', async (req, res) => {
   try {
     const duck = await Duck.findById(req.params.id);
     if (!duck) return res.status(404).json({ message: 'Duck not found' });
 
     duck.found = true;
+    duck.foundDate = new Date(); // Set the found date to the current date
 
     const updatedDuck = await duck.save();
     res.json(updatedDuck);

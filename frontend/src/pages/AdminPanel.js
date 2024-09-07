@@ -77,6 +77,7 @@ const AdminPanel = () => {
     houseId: "",
     photo: "",
     userId: "",
+    foundDate: "",
   });
   const [currentHouse, setCurrentHouse] = useState({
     name: "",
@@ -188,6 +189,7 @@ const AdminPanel = () => {
       formData.append("type", currentDuck.type);
       formData.append("houseId", currentDuck.houseId);
       formData.append("userId", currentDuck.userId);
+      formData.append("foundDate", currentDuck.foundDate);
       if (currentDuck.photo instanceof File) {
         formData.append("photo", currentDuck.photo);
       }
@@ -335,6 +337,7 @@ const AdminPanel = () => {
       type: duck.type,
       photo: duck.photo,
       found: duck.found,
+      foundDate: duck.foundDate,
     });
     setIsDuckEditing(true);
     setShowDuckModal(true);

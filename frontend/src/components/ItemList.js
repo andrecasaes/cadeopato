@@ -8,7 +8,8 @@ import {
   Skeleton,
 } from "@mui/material";
 import ImageLoader from "./ImageLoader";
-import "./ItemList.css"
+import "./ItemList.css";
+import { format } from "date-fns"; // Import date-fns for formatting
 
 const ItemList = ({
   loading,
@@ -67,7 +68,14 @@ const ItemList = ({
                         variant="body2"
                         color={item.found ? "success.main" : "error.main"}
                       >
-                        {item.found ? "Encontrado" : "Escondido"}
+                        {item.found && item.foundDate
+                          ? `Encontrado em ${format(
+                              new Date(item.foundDate),
+                              "dd/MM/yyyy HH:mm"
+                            )}`
+                          : item.found
+                          ? "Encontrado, data indisponível"
+                          : "Escondido"}
                       </Typography>
                     </>
                   ) : null

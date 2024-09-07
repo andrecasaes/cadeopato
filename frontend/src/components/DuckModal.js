@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ImageLoader from "./ImageLoader";
+import { format } from "date-fns"; // Use date-fns for formatting the date
 
 const DuckModal = ({
   open,
@@ -28,6 +29,11 @@ const DuckModal = ({
   submitting,
   apiBaseUrl,
 }) => {
+  // Format the foundDate if it exists
+  const formattedFoundDate = currentDuck.foundDate
+    ? format(new Date(currentDuck.foundDate), "yyyy-MM-dd'T'HH:mm") // Proper format for datetime-local input
+    : "";
+
   return (
     <Modal
       open={open}
@@ -54,12 +60,7 @@ const DuckModal = ({
           position: "relative",
         }}
       >
-        <Typography
-          id="modal-title"
-          variant="h6"
-          component="h2"
-          gutterBottom
-        >
+        <Typography id="modal-title" variant="h6" component="h2" gutterBottom>
           {isEditing ? "Edit Duck" : "Add New Duck"}
           <IconButton
             aria-label="close"
@@ -130,6 +131,21 @@ const DuckModal = ({
               ))}
             </Select>
           </FormControl>
+          {currentDuck.found && (
+            <FormControl fullWidth margin="normal">
+              <TextField
+                label="Data Encontrado"
+                type="datetime-local"
+                id="foundDate"
+                name="foundDate"
+                value={formattedFoundDate}
+                onChange={handleInputChange} // Allow changes to the date and time
+                InputLabelProps={{
+                  shrink: true, // Keep the label floating even when the input is filled
+                }}
+              />
+            </FormControl>
+          )}
           <FormControl fullWidth margin="normal">
             <Button variant="contained" component="label">
               Upload Photo
@@ -154,7 +170,10 @@ const DuckModal = ({
                   />
                 ) : (
                   <ImageLoader
-                    src={`${apiBaseUrl}/${currentDuck.photo.replace(/\\/g, "/")}`}
+                    src={`${apiBaseUrl}/${currentDuck.photo.replace(
+                      /\\/g,
+                      "/"
+                    )}`}
                     variant="retangular"
                     alt="Duck Preview"
                     className="duck-image-preview"
@@ -172,11 +191,7 @@ const DuckModal = ({
             sx={{ mt: 3 }}
             disabled={submitting}
           >
-            {submitting
-              ? "Saving..."
-              : isEditing
-              ? "Update Duck"
-              : "Add Duck"}
+            {submitting ? "Saving..." : isEditing ? "Update Duck" : "Add Duck"}
           </Button>
 
           {isEditing && (

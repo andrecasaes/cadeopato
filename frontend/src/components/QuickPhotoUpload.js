@@ -32,14 +32,18 @@ const QuickPhotoUpload = ({ open, handleClose, onUploadSuccess }) => {
         setErrorMessage('Navegador não suporta o acesso à câmera.');
         return;
       }
-
+  
       try {
+        // Force the browser to prompt for camera permission
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        
+        // If permission is granted, enumerate devices
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter((device) => device.kind === 'videoinput');
         const rearCameras = videoDevices.filter((device) =>
           device.label.toLowerCase().includes('back')
         );
-
+  
         // Set the first rear camera by default
         if (rearCameras.length > 0) {
           setDevices(rearCameras);
@@ -49,13 +53,18 @@ const QuickPhotoUpload = ({ open, handleClose, onUploadSuccess }) => {
         } else {
           setErrorMessage('Nenhuma câmera disponível!');
         }
+  
+        // Stop the stream after getting permission (since we'll use the webcam component)
+        stream.getTracks().forEach(track => track.stop());
       } catch (error) {
-        setErrorMessage('Erro ao acessar dispositivos de vídeo.');
+        setErrorMessage('Permissão da câmera negada ou erro ao acessar a câmera.');
+        console.error('Camera permission error:', error);
       }
     };
-
+  
     getMediaDevices();
   }, []);
+  
 
   // Function to capture the image from the webcam
   const capturePhoto = () => {

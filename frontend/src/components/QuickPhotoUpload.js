@@ -17,29 +17,40 @@ const apiBaseUrl =
 
 const QuickPhotoUpload = ({ open, handleClose, onUploadSuccess }) => {
   const [imageSrc, setImageSrc] = useState(null); // For storing the captured image
-  const [duckNumber, setDuckNumber] = useState(""); // For storing the duck number input
+  const [duckNumber, setDuckNumber] = useState(''); // For storing the duck number input
   const webcamRef = useRef(null); // Reference to the webcam
   const [uploading, setUploading] = useState(false); // Loading state for uploads
   const [devices, setDevices] = useState([]); // List of available media devices
-  const [selectedDeviceId, setSelectedDeviceId] = useState(""); // Currently selected rear camera ID
-  const [errorMessage, setErrorMessage] = useState(""); // Error message for duck not found
-  const [successMessage, setSuccessMessage] = useState(""); // Success message
+  const [selectedDeviceId, setSelectedDeviceId] = useState(''); // Currently selected rear camera ID
+  const [errorMessage, setErrorMessage] = useState(''); // Error message for duck not found
+  const [successMessage, setSuccessMessage] = useState(''); // Success message
 
   useEffect(() => {
     // Fetch media devices and filter for back-facing cameras
     const getMediaDevices = async () => {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(
-        (device) => device.kind === "videoinput"
-      );
-      const rearCameras = videoDevices.filter((device) =>
-        device.label.toLowerCase().includes("back")
-      );
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+        setErrorMessage('Navegador não suporta o acesso à câmera.');
+        return;
+      }
 
-      // Set the first rear camera by default
-      if (rearCameras.length > 0) {
-        setDevices(rearCameras);
-        setSelectedDeviceId(rearCameras[0].deviceId);
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter((device) => device.kind === 'videoinput');
+        const rearCameras = videoDevices.filter((device) =>
+          device.label.toLowerCase().includes('back')
+        );
+
+        // Set the first rear camera by default
+        if (rearCameras.length > 0) {
+          setDevices(rearCameras);
+          setSelectedDeviceId(rearCameras[0].deviceId);
+        } else if (videoDevices.length > 0) {
+          setSelectedDeviceId(videoDevices[0].deviceId); // Default to the first available camera
+        } else {
+          setErrorMessage('Nenhuma câmera disponível!');
+        }
+      } catch (error) {
+        setErrorMessage('Erro ao acessar dispositivos de vídeo.');
       }
     };
 
@@ -49,58 +60,64 @@ const QuickPhotoUpload = ({ open, handleClose, onUploadSuccess }) => {
   // Function to capture the image from the webcam
   const capturePhoto = () => {
     const imageSrc = webcamRef.current.getScreenshot();
-    setImageSrc(imageSrc);
-    setSuccessMessage(""); // Clear success message when retaking photo
+    if (imageSrc) {
+      setImageSrc(imageSrc);
+      setSuccessMessage(''); // Clear success message when retaking photo
+    } else {
+      setErrorMessage('Erro ao capturar a foto. Tente novamente.');
+    }
   };
 
   // Function to switch between rear cameras
   const switchCamera = () => {
-    const currentIndex = devices.findIndex(
-      (device) => device.deviceId === selectedDeviceId
-    );
-    const nextIndex = (currentIndex + 1) % devices.length;
-    setSelectedDeviceId(devices[nextIndex].deviceId);
+    if (devices.length > 1) {
+      const currentIndex = devices.findIndex((device) => device.deviceId === selectedDeviceId);
+      const nextIndex = (currentIndex + 1) % devices.length;
+      setSelectedDeviceId(devices[nextIndex].deviceId);
+    }
   };
 
   // Function to handle the duck number input
   const handleDuckNumberChange = (e) => {
     setDuckNumber(e.target.value);
-    setErrorMessage(""); // Clear the error message when the duck number changes
-    setSuccessMessage(""); // Clear success message when duck number changes
+    setErrorMessage(''); // Clear the error message when the duck number changes
+    setSuccessMessage(''); // Clear success message when duck number changes
   };
 
   // Function to handle the upload of the photo
   const handleUpload = async () => {
-    if (!duckNumber || !imageSrc) return; // Prevent upload if duck number or image is missing
+    if (!duckNumber || !imageSrc) {
+      setErrorMessage('Número do pato ou foto ausente.');
+      return; // Prevent upload if duck number or image is missing
+    }
 
     setUploading(true);
-    setErrorMessage(""); // Clear any previous error messages
-    setSuccessMessage(""); // Clear success message
+    setErrorMessage(''); // Clear any previous error messages
+    setSuccessMessage(''); // Clear success message
 
     try {
       const formData = new FormData();
 
       // Convert the base64 image to a file object for upload
       const blob = await fetch(imageSrc).then((res) => res.blob());
-      formData.append(
-        "photo",
-        new File([blob], "duck-photo.jpg", { type: "image/jpeg" })
-      );
+      formData.append('photo', new File([blob], 'duck-photo.jpg', { type: 'image/jpeg' }));
 
       // PUT request to update only the image of the duck by custom ID
       await axios.put(`${apiBaseUrl}/ducks/image/${duckNumber}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       // Show success message and reset the form to allow another upload
       setSuccessMessage(`Pato ${duckNumber} mudou de visual!`);
       setImageSrc(null); // Reset the image to allow capturing/uploading another one
-      setDuckNumber(""); // Reset duck number input
+      setDuckNumber(''); // Reset duck number input
     } catch (error) {
       if (error.response && error.response.status === 404) {
         setErrorMessage(`Pato ${duckNumber} não encontrado!`);
+      } else if (error.response) {
+        setErrorMessage('Erro ao carregar a foto. Tente novamente.');
       } else {
-        console.error("Error uploading duck photo:", error);
+        setErrorMessage('Erro de rede. Verifique sua conexão.');
       }
     } finally {
       setUploading(false); // Stop loading after the request completes

@@ -9,27 +9,32 @@ import {
   Tabs,
   Tab,
   Fab,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  Drawer,
 } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
+import { ArrowBack, FilterList } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { FaPlus, FaCamera } from "react-icons/fa";
 import DuckModal from "../components/DuckModal";
 import HouseModal from "../components/HouseModal";
 import UserModal from "../components/UserModal";
 import ItemList from "../components/ItemList";
-import QuickPhotoUpload from '../components/QuickPhotoUpload';
+import QuickPhotoUpload from "../components/QuickPhotoUpload";
 
 const apiBaseUrl =
   process.env.REACT_APP_API_BASE_URL || "https://localhost:4000";
 
-const fetchDucks = async (setDucks, setFilteredDucks, setLoading) => {
+const fetchDucks = async (setDucks, setLoading) => {
   try {
     const response = await axios.get(`${apiBaseUrl}/ducks`);
     const ducksData = response.data;
     setDucks(ducksData);
-    const sortedDucks = ducksData.sort((a, b) => a.id - b.id);
-    setFilteredDucks(sortedDucks);
-    return sortedDucks; // Return the sorted ducks
+    return ducksData;
   } catch (error) {
     console.error("Error fetching ducks:", error);
     return []; // Return an empty array on error
@@ -70,7 +75,6 @@ const AdminPanel = () => {
   const [ducks, setDucks] = useState([]);
   const [houses, setHouses] = useState([]);
   const [users, setUsers] = useState([]);
-  const [filteredDucks, setFilteredDucks] = useState([]);
   const [currentDuck, setCurrentDuck] = useState({
     id: "",
     type: "",
@@ -89,8 +93,6 @@ const AdminPanel = () => {
     profilePicture: "",
   });
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedHouse, setSelectedHouse] = useState("");
-  const [selectedUser, setSelectedUser] = useState("");
   const [isDuckEditing, setIsDuckEditing] = useState(false);
   const [isHouseEditing, setIsHouseEditing] = useState(false);
   const [isUserEditing, setIsUserEditing] = useState(false);
@@ -103,6 +105,12 @@ const AdminPanel = () => {
   const [userSubmitting, setUserSubmitting] = useState(false);
   const [filteredItems, setFilteredItems] = useState([]);
   const [openQuickUpload, setOpenQuickUpload] = useState(false);
+
+  // New state variables for filters and filter panel visibility
+  const [selectedFilterUserId, setSelectedFilterUserId] = useState("");
+  const [selectedFilterHouseId, setSelectedFilterHouseId] = useState("");
+  const [selectedFilterStatus, setSelectedFilterStatus] = useState("all");
+  const [showFilters, setShowFilters] = useState(false); // Controls the visibility of the filters panel
 
   const navigate = useNavigate();
 
@@ -117,26 +125,51 @@ const AdminPanel = () => {
     const loadInitialTab = async () => {
       fetchHouses(setHouses, setLoading);
       fetchUsers(setUsers, setLoading);
-      const ducksData = await fetchDucks(
-        setDucks,
-        setFilteredDucks,
-        setLoading
-      );
-      setFilteredItems(ducksData);
+      const ducksData = await fetchDucks(setDucks, setLoading);
+      // No need to setFilteredItems here; it will be set by handleFilterChange
     };
     loadInitialTab();
   }, []);
+
+  useEffect(() => {
+    handleFilterChange();
+  }, [
+    selectedFilterUserId,
+    selectedFilterHouseId,
+    selectedFilterStatus,
+    ducks,
+  ]);
+
+  const handleFilterChange = () => {
+    let filtered = ducks;
+
+    if (selectedFilterUserId) {
+      filtered = filtered.filter(
+        (duck) => duck.user && duck.user._id === selectedFilterUserId
+      );
+    }
+
+    if (selectedFilterHouseId) {
+      filtered = filtered.filter(
+        (duck) => duck.house && duck.house._id === selectedFilterHouseId
+      );
+    }
+
+    if (selectedFilterStatus === "found") {
+      filtered = filtered.filter((duck) => duck.found === true);
+    } else if (selectedFilterStatus === "not_found") {
+      filtered = filtered.filter((duck) => duck.found === false);
+    }
+
+    setFilteredItems(filtered);
+  };
 
   const handleTabChange = async (event, newValue) => {
     setActiveTab(newValue);
     switch (newValue) {
       case 0:
-        const ducksData = await fetchDucks(
-          setDucks,
-          setFilteredDucks,
-          setLoading
-        );
-        setFilteredItems(ducksData);
+        await fetchDucks(setDucks, setLoading);
+        // No need to setFilteredItems; handleFilterChange will handle it
         break;
       case 1:
         const usersData = await fetchUsers(setUsers, setLoading);
@@ -204,16 +237,7 @@ const AdminPanel = () => {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }
-      const updatedDucks = await fetchDucks(
-        setDucks,
-        setFilteredDucks,
-        setLoading
-      );
-
-      if (activeTab === 0) {
-        setFilteredItems(updatedDucks);
-      }
-
+      await fetchDucks(setDucks, setLoading);
       setShowDuckModal(false);
     } catch (error) {
       console.error("Error saving duck:", error);
@@ -285,15 +309,7 @@ const AdminPanel = () => {
   const handleDuckDelete = async () => {
     try {
       await axios.delete(`${apiBaseUrl}/ducks/${currentDuck._id}`);
-      const updatedDucks = await fetchDucks(
-        setDucks,
-        setFilteredDucks,
-        setLoading
-      );
-
-      if (activeTab === 0) {
-        setFilteredItems(updatedDucks);
-      }
+      await fetchDucks(setDucks, setLoading);
       setShowDuckModal(false);
     } catch (error) {
       console.error("Error deleting duck:", error);
@@ -355,8 +371,8 @@ const AdminPanel = () => {
 
   const openDuckAddModal = () => {
     setCurrentDuck({
-      userId: selectedHouse || "",
-      houseId: selectedUser || "",
+      userId: "",
+      houseId: "",
       id: "",
       type: "normal",
       found: false,
@@ -398,20 +414,6 @@ const AdminPanel = () => {
     setShowUserModal(true);
   };
 
-  const handleUserFilter = (event, newUserId) => {
-    setSelectedUser(newUserId);
-
-    if (newUserId) {
-      setFilteredDucks(
-        ducks
-          .filter((duck) => duck.user._id === newUserId)
-          .sort((a, b) => a.id - b.id)
-      );
-    } else {
-      setFilteredDucks(ducks.sort((a, b) => a.id - b.id));
-    }
-  };
-
   // Function to open the quick upload modal
   const handleOpenQuickUpload = () => {
     setOpenQuickUpload(true);
@@ -427,6 +429,11 @@ const AdminPanel = () => {
     // Logic to refresh your duck list here
     setOpenQuickUpload(false);
     // Fetch ducks again if needed
+  };
+
+  // Function to toggle the visibility of the filters panel
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
   };
 
   return (
@@ -447,6 +454,15 @@ const AdminPanel = () => {
           >
             <h2 style={{ margin: 0 }}>Admin</h2>
           </Typography>
+          {activeTab === 0 && (
+            <IconButton
+              color="inherit"
+              aria-label="filter"
+              onClick={toggleFilters}
+            >
+              <FilterList />
+            </IconButton>
+          )}
         </Toolbar>
         <Tabs
           value={activeTab}
@@ -505,54 +521,118 @@ const AdminPanel = () => {
           },
           color: "white", // Text color inside the FAB
         }}
-        
       >
         <FaCamera />
       </Fab>
 
+      {/* Modals */}
+      <DuckModal
+        open={showDuckModal}
+        handleClose={() => setShowDuckModal(false)}
+        isEditing={isDuckEditing}
+        currentDuck={currentDuck}
+        houses={houses}
+        users={users}
+        handleInputChange={handleDuckInputChange}
+        handlePhotoChange={handleDuckPhotoChange}
+        handleSubmit={handleDuckSubmit}
+        handleDelete={handleDuckDelete}
+        submitting={duckSubmitting}
+        apiBaseUrl={apiBaseUrl}
+      />
+      <HouseModal
+        open={showHouseModal} // State to control the modal visibility
+        handleClose={() => setShowHouseModal(false)} // Function to close the modal
+        isEditing={isHouseEditing} // State to track if we are editing or adding
+        currentHouse={currentHouse} // State holding the current house data
+        handleInputChange={handleHouseInputChange} // Function to handle form input changes
+        handleSubmit={handleHouseSubmit} // Function to handle form submission
+        handleDelete={handleHouseDelete} // Function to handle house deletion
+        submitting={houseSubmitting} // State to track form submission
+      />
+      <UserModal
+        open={showUserModal}
+        onClose={() => setShowUserModal(false)}
+        isEditing={isUserEditing}
+        currentUser={currentUser}
+        houses={houses}
+        onInputChange={handleUserInputChange}
+        handlePhotoChange={handleUserPhotoChange}
+        onSubmit={handleUserSubmit}
+        onDelete={handleUserDelete}
+        submitting={userSubmitting}
+        apiBaseUrl={apiBaseUrl}
+      />
+      <QuickPhotoUpload
+        open={openQuickUpload}
+        handleClose={handleCloseQuickUpload}
+        onUploadSuccess={handleUploadSuccess}
+      />
       <Container>
-        <DuckModal
-          open={showDuckModal}
-          handleClose={() => setShowDuckModal(false)}
-          isEditing={isDuckEditing}
-          currentDuck={currentDuck}
-          houses={houses}
-          users={users}
-          handleInputChange={handleDuckInputChange}
-          handlePhotoChange={handleDuckPhotoChange}
-          handleSubmit={handleDuckSubmit}
-          handleDelete={handleDuckDelete}
-          submitting={duckSubmitting}
-          apiBaseUrl={apiBaseUrl}
-        />
-        <HouseModal
-          open={showHouseModal} // State to control the modal visibility
-          handleClose={() => setShowHouseModal(false)} // Function to close the modal
-          isEditing={isHouseEditing} // State to track if we are editing or adding
-          currentHouse={currentHouse} // State holding the current house data
-          handleInputChange={handleHouseInputChange} // Function to handle form input changes
-          handleSubmit={handleHouseSubmit} // Function to handle form submission
-          handleDelete={handleHouseDelete} // Function to handle house deletion
-          submitting={houseSubmitting} // State to track form submission
-        />
-        <UserModal
-          open={showUserModal}
-          onClose={() => setShowUserModal(false)}
-          isEditing={isUserEditing}
-          currentUser={currentUser}
-          houses={houses}
-          onInputChange={handleUserInputChange}
-          handlePhotoChange={handleUserPhotoChange}
-          onSubmit={handleUserSubmit}
-          onDelete={handleUserDelete}
-          submitting={userSubmitting}
-          apiBaseUrl={apiBaseUrl}
-        />
-        <QuickPhotoUpload
-          open={openQuickUpload}
-          handleClose={handleCloseQuickUpload}
-          onUploadSuccess={handleUploadSuccess}
-        />
+        <Drawer
+          anchor="right"
+          open={showFilters}
+          onClose={toggleFilters}
+          variant="temporary"
+        >
+          <div style={{ width: 250, padding: 16 }}>
+            <Typography variant="h6">Filters</Typography>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>User</InputLabel>
+              <Select
+                value={selectedFilterUserId}
+                onChange={(e) => setSelectedFilterUserId(e.target.value)}
+              >
+                <MenuItem value="">
+                  <em>All</em>
+                </MenuItem>
+                {users.map((user) => (
+                  <MenuItem key={user._id} value={user._id}>
+                    {user.username}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>House</InputLabel>
+              <Select
+                value={selectedFilterHouseId}
+                onChange={(e) => setSelectedFilterHouseId(e.target.value)}
+              >
+                <MenuItem value="">
+                  <em>All</em>
+                </MenuItem>
+                {houses.map((house) => (
+                  <MenuItem key={house._id} value={house._id}>
+                    {house.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={selectedFilterStatus}
+                onChange={(e) => setSelectedFilterStatus(e.target.value)}
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="found">Found</MenuItem>
+                <MenuItem value="not_found">Not Found</MenuItem>
+              </Select>
+            </FormControl>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setSelectedFilterUserId("");
+                setSelectedFilterHouseId("");
+                setSelectedFilterStatus("all");
+              }}
+              fullWidth
+            >
+              Clear Filters
+            </Button>
+          </div>
+        </Drawer>
 
         <ItemList
           loading={loading}

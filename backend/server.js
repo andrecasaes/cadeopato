@@ -200,7 +200,7 @@ app.get('/ducks/:id', async (req, res) => {
   }
 });
 // Set the competition start date
-const competitionStartDate = new Date('2024-09-08');
+const competitionStartDate = new Date('2024-09-15');
 
 // Function to get date at midnight to avoid time component issues
 function getMidnightDate(date) {
@@ -233,11 +233,13 @@ app.get('/rankings', async (req, res) => {
           } else if (weeksSinceStart === 0) {
             points = 5; // First week
           } else if (weeksSinceStart === 1) {
-            points = 4; // Second week
+            points = 5; // Second week
           } else if (weeksSinceStart === 2) {
-            points = 3; // Third week
+            points = 4; // Third week
           } else if (weeksSinceStart === 3) {
-            points = 2; // Fourth week
+            points = 3; // Fourth week
+          } else if (weeksSinceStart === 4) {
+            points = 2; // Fifth week
           } else {
             points = 1; // After fourth week
           }

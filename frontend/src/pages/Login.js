@@ -121,11 +121,13 @@ const Login = () => {
                   ))
                 : users.map((user) => (
                     <div
-                      key={user._id}
                       className="col-6 mb-4 user-card"
                       onClick={() => handleLogin(user)}
                     >
-                      <div className="card p-2 d-flex flex-column justify-content-center">
+                      <div
+                        className="card p-2 d-flex flex-column justify-content-center align-items-center"
+                        style={{ height: "200px" }} // Fixed height for the card
+                      >
                         <div className="d-flex justify-content-center">
                           <ImageLoader
                             src={
@@ -138,9 +140,11 @@ const Login = () => {
                             className="card-img-top user-img mx-auto d-block"
                           />
                         </div>
-                        <div className="card-body">
+                        <div
+                          className="card-body d-flex justify-content-center align-items-center text-center"
+                          style={{ flexGrow: 1 }} // Ensures the name area fills the remaining space
+                        >
                           <h5>{user.username}</h5>
-                          <p className="card-text">{user.house?.name}</p>
                         </div>
                       </div>
                     </div>

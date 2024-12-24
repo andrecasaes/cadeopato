@@ -24,8 +24,9 @@ import {
   Clear as ClearIcon,
   Leaderboard as LeaderboardIcon,
 } from "@mui/icons-material";
-import "./Dashboard.css"; // Import the custom CSS file
 import { useNavigate } from "react-router-dom";
+import SolveClueModal from "../components/SolveClueModal";
+import "./Dashboard.css"; // Import the custom CSS file
 
 const Dashboard = () => {
   const { authState } = useContext(AuthContext);
@@ -36,6 +37,8 @@ const Dashboard = () => {
   const [foundNumber, setFoundNumber] = useState(0);
   const [error, setError] = useState(null); // State to handle errors
   const [toggleLoading, setToggleLoading] = useState(false); // State to prevent rapid toggling
+  const [selectedDuck, setSelectedDuck] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   // Redirect to login if no user is logged in
@@ -46,33 +49,34 @@ const Dashboard = () => {
   const apiBaseUrl =
     process.env.REACT_APP_API_BASE_URL || "https://localhost:4000";
 
+  const fetchDucks = async () => {
+    setLoading(true);
+    setError(null); // Reset error before fetching
+    try {
+      const response = await axios.get(
+        `${apiBaseUrl}/ducks/search?userId=${authState.user.selectedUser._id}`
+      );
+
+      const houseDucks = response.data;
+      setDucks(houseDucks);
+
+      // Calculate the percentage of found ducks
+      const foundDucks = houseDucks.filter((duck) => duck.found).length;
+      const percentage = (foundDucks / houseDucks.length) * 100;
+      setFoundPercentage(percentage);
+      setFoundNumber(foundDucks);
+      setTotalNumber(houseDucks.length);
+    } catch (error) {
+      console.error("Error fetching ducks:", error);
+      setError(
+        "Não foi possível carregar os dados. Por favor, contate o administrador."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchDucks = async () => {
-      setLoading(true);
-      setError(null); // Reset error before fetching
-      try {
-        const response = await axios.get(
-          `${apiBaseUrl}/ducks/search?userId=${authState.user.selectedUser._id}`
-        );
-
-        const houseDucks = response.data;
-        setDucks(houseDucks);
-
-        // Calculate the percentage of found ducks
-        const foundDucks = houseDucks.filter((duck) => duck.found).length;
-        const percentage = (foundDucks / houseDucks.length) * 100;
-        setFoundPercentage(percentage);
-        setFoundNumber(foundDucks);
-        setTotalNumber(houseDucks.length);
-      } catch (error) {
-        console.error("Error fetching ducks:", error);
-        setError(
-          "Não foi possível carregar os dados. Por favor, contate o administrador."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchDucks();
   }, [apiBaseUrl, authState.user.selectedUser._id]);
 
@@ -106,11 +110,35 @@ const Dashboard = () => {
     }
   };
 
+  const handleDuckSelect = (duck) => {
+    setSelectedDuck(duck);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setSelectedDuck(null);
+    setIsModalOpen(false);
+  };
+
+  const updateDuckData = (updatedDuck) => {
+    const updatedDucks = ducks.map((d) =>
+      d._id === updatedDuck._id ? updatedDuck : d
+    );
+    setDucks(updatedDucks);
+
+    // Recalculate percentages
+    const foundDucks = updatedDucks.filter((duck) => duck.found).length;
+    const percentage = (foundDucks / updatedDucks.length) * 100;
+    setFoundPercentage(percentage);
+    setFoundNumber(foundDucks);
+    setTotalNumber(updatedDucks.length);
+  };
+
   return (
     <>
       <AppBar className="Appbar" position="sticky" color="default">
         <Toolbar>
-        <IconButton
+          <IconButton
             edge="start"
             color="inherit"
             aria-label="back"
@@ -124,7 +152,6 @@ const Dashboard = () => {
             sx={{ flexGrow: 1, alignItems: "center", textAlign: "center" }}
           >
             <h2 style={{ margin: 0 }}>
-              {" "}
               {authState.user.selectedUser.username} Dashboard
             </h2>
           </Typography>
@@ -172,20 +199,24 @@ const Dashboard = () => {
                 </ListItem>
               ))
             : ducks.map((duck) => (
-                <ListItem key={duck._id} className="duck-list-item">
+                <ListItem
+                  key={duck._id}
+                  className="duck-list-item"
+                  button
+                  onClick={() => handleDuckSelect(duck)}
+                >
                   <ListItemText
                     primary={<h5>Pato {duck.id}</h5>}
-                    secondary={
-                      <>
-                        <span>Tipo: {duck.type}</span>
-                      </>
-                    }
+                    secondary={<span>Tipo: {duck.type}</span>}
                   />
                   <ListItemSecondaryAction>
                     <ToggleButton
                       value="check"
                       selected={duck.found}
-                      onChange={() => toggleFoundState(duck._id, !duck.found)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleFoundState(duck._id, !duck.found);
+                      }}
                       className={
                         duck.found
                           ? "toggle-button-selected"
@@ -194,7 +225,10 @@ const Dashboard = () => {
                       disabled={toggleLoading}
                     >
                       {toggleLoading ? (
-                        <CircularProgress size={24} sx={{ color: "var(--accent-color)" }} /> // Display a spinner inside the button
+                        <CircularProgress
+                          size={24}
+                          sx={{ color: "var(--accent-color)" }}
+                        />
                       ) : duck.found ? (
                         <CheckIcon style={{ color: "#28a745" }} />
                       ) : (
@@ -206,6 +240,20 @@ const Dashboard = () => {
               ))}
         </List>
       </div>
+
+      <SolveClueModal
+        open={isModalOpen}
+        handleClose={handleModalClose}
+        duck={selectedDuck}
+        apiBaseUrl={apiBaseUrl}
+        onClueSolved={(updatedClue) => {
+          const updatedDuck = {
+            ...selectedDuck,
+            clues: [updatedClue],
+          };
+          updateDuckData(updatedDuck);
+        }}
+      />
     </>
   );
 };

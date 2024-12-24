@@ -49,6 +49,14 @@ const duckSchema = new mongoose.Schema({
   found: Boolean,
   foundDate: { type: Date }, // Date when the duck was found
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Reference to the user who found the duck
+  clues: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Clue' }], // Reference to the clues for the duck
+});
+
+const clueSchema = new mongoose.Schema({
+  _id: mongoose.Schema.Types.ObjectId,
+  clue: { type: String, required: true },
+  answer: { type: String, required: true },
+  solved: { type: Boolean, default: false },
 });
 
 
@@ -56,6 +64,7 @@ const duckSchema = new mongoose.Schema({
 const House = mongoose.model('House', houseSchema);
 const User = mongoose.model('User', userSchema);
 const Duck = mongoose.model('Duck', duckSchema);
+const Clue = mongoose.model('Clue', clueSchema);
 
 // Use environment variables to determine the upload directory
 const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads/');
@@ -156,7 +165,7 @@ app.put('/users/:id', upload.single('profilePicture'), async (req, res) => {
 // Get all ducks
 app.get('/ducks', async (req, res) => {
   try {
-    const ducks = await Duck.find().populate('user').populate('house');
+    const ducks = await Duck.find().populate('user').populate('house').populate('clues');
     res.json(ducks);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -180,7 +189,8 @@ app.get('/ducks/search', async (req, res) => {
     const ducks = await Duck.find(query)
       .sort({ [sortBy || 'id']: sortOrder })
       .populate('user')  // Populate the user reference
-      .populate('house');  // Populate the house reference
+      .populate('house')
+      .populate('clues');  // Populate the house reference
 
     res.json(ducks);
   } catch (err) {
@@ -192,7 +202,7 @@ app.get('/ducks/search', async (req, res) => {
 // Get a single duck by ID
 app.get('/ducks/:id', async (req, res) => {
   try {
-    const duck = await Duck.findById(req.params.id).populate('user').populate('house');
+    const duck = await Duck.findById(req.params.id).populate('user').populate('house').populate('clues');
     if (!duck) return res.status(404).json({ message: 'Duck not found' });
     res.json(duck);
   } catch (err) {
@@ -500,7 +510,84 @@ app.post('/users/bulk', upload.array('profilePictures'), async (req, res) => {
   }
 });
 
+// Create a new clue associated with a duck
+app.post('/ducks/:duckId/clues', async (req, res) => {
+  const { clue, answer } = req.body;
 
+  try {
+    const duck = await Duck.findById(req.params.duckId);
+    if (!duck) return res.status(404).json({ message: 'Duck not found' });
+
+    const newClue = new Clue({
+      _id: new mongoose.Types.ObjectId(),
+      clue,
+      answer,
+      solved: false,
+    });
+
+    const savedClue = await newClue.save();
+
+    // Add the clue to the duck's clues array
+    duck.clues.push(savedClue._id);
+    await duck.save();
+
+    res.status(201).json(savedClue);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Get all clues
+app.get('/clues', async (req, res) => {
+  try {
+    const clues = await Clue.find();
+    res.json(clues);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get a single clue by ID
+app.get('/clues/:id', async (req, res) => {
+  try {
+    const clue = await Clue.findById(req.params.id);
+    if (!clue) return res.status(404).json({ message: 'Clue not found' });
+    res.json(clue);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Update a clue by ID
+app.put('/clues/:id', async (req, res) => {
+  try {
+    const clue = await Clue.findById(req.params.id);
+    if (!clue) return res.status(404).json({ message: 'Clue not found' });
+
+    const { clue: updatedClue, answer, solved } = req.body;
+    if (updatedClue !== undefined) clue.clue = updatedClue;
+    if (answer !== undefined) clue.answer = answer;
+    if (solved !== undefined) clue.solved = solved;
+
+    const updatedClueObj = await clue.save();
+    res.json(updatedClueObj);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Delete a clue by ID
+app.delete('/clues/:id', async (req, res) => {
+  try {
+    const clue = await Clue.findById(req.params.id);
+    if (!clue) return res.status(404).json({ message: 'Clue not found' });
+
+    await clue.deleteOne();
+    res.json({ message: 'Clue deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 // Load SSL certificate and key based on environment
 const options = {
   key: fs.readFileSync(process.env.SSL_KEY_PATH),

@@ -28,6 +28,7 @@ const DuckModal = ({
   handleDelete,
   submitting,
   apiBaseUrl,
+  handleImageClick,
 }) => {
   // Format the foundDate if it exists
   const formattedFoundDate = currentDuck.foundDate
@@ -159,7 +160,7 @@ const DuckModal = ({
               />
             </Button>
             {currentDuck.photo && (
-              <Box mt={2} sx={{ textAlign: "center" }}>
+              <Box mt={2} sx={{ textAlign: "center" }} onClick={() => handleImageClick(currentDuck)}>
                 {currentDuck.photo instanceof File ? (
                   <ImageLoader
                     src={URL.createObjectURL(currentDuck.photo)}
@@ -167,6 +168,7 @@ const DuckModal = ({
                     variant="retangular"
                     className="duck-image-preview"
                     height="200px"
+                    
                   />
                 ) : (
                   <ImageLoader
@@ -178,6 +180,7 @@ const DuckModal = ({
                     alt="Duck Preview"
                     className="duck-image-preview"
                     height="200px"
+                    onClick={() => handleImageClick(currentDuck)}
                   />
                 )}
               </Box>

@@ -25,6 +25,7 @@ import HouseModal from "../components/HouseModal";
 import UserModal from "../components/UserModal";
 import ItemList from "../components/ItemList";
 import QuickPhotoUpload from "../components/QuickPhotoUpload";
+import ClueModal from "../components/ClueModal";
 
 const apiBaseUrl =
   process.env.REACT_APP_API_BASE_URL || "https://localhost:4000";
@@ -110,7 +111,11 @@ const AdminPanel = () => {
   const [selectedFilterUserId, setSelectedFilterUserId] = useState("");
   const [selectedFilterHouseId, setSelectedFilterHouseId] = useState("");
   const [selectedFilterStatus, setSelectedFilterStatus] = useState("all");
+  const [selectedClueStatus, setSelectedClueStatus] = useState("all");
   const [showFilters, setShowFilters] = useState(false); // Controls the visibility of the filters panel
+
+  const [showClueModal, setShowClueModal] = useState(false);
+  const [selectedDuck, setSelectedDuck] = useState(null);
 
   const navigate = useNavigate();
 
@@ -137,6 +142,7 @@ const AdminPanel = () => {
     selectedFilterUserId,
     selectedFilterHouseId,
     selectedFilterStatus,
+    selectedClueStatus,
     ducks,
   ]);
 
@@ -159,6 +165,16 @@ const AdminPanel = () => {
       filtered = filtered.filter((duck) => duck.found === true);
     } else if (selectedFilterStatus === "not_found") {
       filtered = filtered.filter((duck) => duck.found === false);
+    }
+
+    if (selectedClueStatus === "solved") {
+      filtered = filtered.filter(
+        (duck) => duck.clues && duck.clues.some((clue) => clue.solved)
+      );
+    } else if (selectedClueStatus === "unsolved") {
+      filtered = filtered.filter(
+        (duck) => duck.clues && duck.clues.some((clue) => !clue.solved)
+      );
     }
 
     setFilteredItems(filtered);
@@ -354,6 +370,7 @@ const AdminPanel = () => {
       photo: duck.photo,
       found: duck.found,
       foundDate: duck.foundDate,
+      clues: duck.clues,
     });
     setIsDuckEditing(true);
     setShowDuckModal(true);
@@ -434,6 +451,25 @@ const AdminPanel = () => {
   // Function to toggle the visibility of the filters panel
   const toggleFilters = () => {
     setShowFilters(!showFilters);
+  };
+
+  const handleOpenClueModal = (duck) => {
+    setSelectedDuck(duck);
+    setShowClueModal(true);
+  };
+
+  const handleClueSubmit = async (newClue) => {
+    if (!selectedDuck) return;
+
+    try {
+      const response = await axios.post(
+        `${apiBaseUrl}/ducks/${selectedDuck._id}/clues`,
+        newClue
+      );
+      setShowClueModal(false);
+    } catch (error) {
+      console.error("Error submitting clue:", error);
+    }
   };
 
   return (
@@ -539,6 +575,7 @@ const AdminPanel = () => {
         handleDelete={handleDuckDelete}
         submitting={duckSubmitting}
         apiBaseUrl={apiBaseUrl}
+        handleImageClick={handleOpenClueModal}
       />
       <HouseModal
         open={showHouseModal} // State to control the modal visibility
@@ -567,6 +604,13 @@ const AdminPanel = () => {
         open={openQuickUpload}
         handleClose={handleCloseQuickUpload}
         onUploadSuccess={handleUploadSuccess}
+      />
+      <ClueModal
+        open={showClueModal}
+        handleClose={() => setShowClueModal(false)}
+        duck={selectedDuck}
+        apiBaseUrl={apiBaseUrl}
+        onClueSubmit={handleClueSubmit}
       />
       <Container>
         <Drawer
@@ -620,12 +664,24 @@ const AdminPanel = () => {
                 <MenuItem value="not_found">Not Found</MenuItem>
               </Select>
             </FormControl>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Status da Charada</InputLabel>
+              <Select
+                value={selectedClueStatus}
+                onChange={(e) => setSelectedClueStatus(e.target.value)}
+              >
+                <MenuItem value="all">Todos</MenuItem>
+                <MenuItem value="solved">Resolvidos</MenuItem>
+                <MenuItem value="unsolved">Não Resolvidos</MenuItem>
+              </Select>
+            </FormControl>
             <Button
               variant="outlined"
               onClick={() => {
                 setSelectedFilterUserId("");
                 setSelectedFilterHouseId("");
                 setSelectedFilterStatus("all");
+                setSelectedClueStatus("all");
               }}
               fullWidth
             >

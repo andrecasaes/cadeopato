@@ -8,6 +8,7 @@ import {
   Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import ReactMarkdown from "react-markdown";
 import ImageLoader from "./ImageLoader";
 
 const SolveClueModal = ({ open, handleClose, duck, apiBaseUrl, onClueSolved }) => {
@@ -22,11 +23,12 @@ const SolveClueModal = ({ open, handleClose, duck, apiBaseUrl, onClueSolved }) =
   }, [duck]);
 
   const handleInputChange = (e) => {
-    setUserAnswer(e.target.value);
+    setUserAnswer(e.target.value.toUpperCase());
   };
 
   const handleSubmit = async () => {
-    if (userAnswer.toLowerCase() === currentDuck?.clues[0]?.answer.toLowerCase()) {
+    const correctAnswer = currentDuck?.clues[0]?.answer.toUpperCase();
+    if (userAnswer === correctAnswer) {
       setIsCorrect(true);
 
       try {
@@ -81,7 +83,7 @@ const SolveClueModal = ({ open, handleClose, duck, apiBaseUrl, onClueSolved }) =
         }}
       >
         <Typography id="solve-clue-modal-title" variant="h6" gutterBottom>
-          Resolver Charada para o Pato #{currentDuck?.id}
+          Charada #{currentDuck?.id}
           <IconButton
             aria-label="fechar"
             onClick={handleClose}
@@ -108,9 +110,9 @@ const SolveClueModal = ({ open, handleClose, duck, apiBaseUrl, onClueSolved }) =
           </>
         ) : (
           <>
-            <Typography variant="body1" sx={{ mb: 3 }}>
-              {currentDuck?.clues[0]?.clue || "Nenhuma charada disponível."}
-            </Typography>
+            <Box sx={{ mb: 3 }}>
+              <ReactMarkdown>{currentDuck?.clues[0]?.clue || "Nenhuma charada disponível."}</ReactMarkdown>
+            </Box>
             <TextField
               label="Resposta"
               value={userAnswer}

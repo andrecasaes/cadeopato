@@ -15,7 +15,7 @@ services:
       - SSL_CERT_PATH=/app/certs/cadeopato.pem  # Path to the SSL certificate
     volumes:
       - uploads:/app/uploads  # Mount the uploads directory for persistent storage
-      - /home/pi/certs:/app/certs  # Mount the certs directory from host to container
+      - /home/admin/certs:/app/certs  # Mount the certs directory from host to container
     restart: unless-stopped
 
   db:

@@ -30,3 +30,6 @@ services:
 volumes:
   mongo-data:
   uploads:
+  
+networks:
+  ducknet:
